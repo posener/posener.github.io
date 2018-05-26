@@ -72,7 +72,6 @@ This could be done by adding `t.Parallel()` to the nested test created by `t.Run
 			t.Log(tc.value)
 		})
 	}
-}
 ```
 
 This is the result:
@@ -141,7 +140,6 @@ To make our life easier, and maybe more confusing, we can name it with the same 
 			t.Log(tc.value)
 		})
 	}
-}
 ```
 
 Running the test in the above code will result in the right tests, notice that the order of the output have changed since
