@@ -1,9 +1,7 @@
 ---
 layout: post
-title: Story: Writing Scripts with Go
+title: A Story About Writing Scripts with Go
 ---
-
-This was first published through [gists](https://gist.github.com/posener/73ffd326d88483df6b1cb66e8ed1e0bd).
 
 This is a story about how I tried to use Go for scripting. 
 In this story, I’ll discuss the need for a Go script, how we would expect it to behave and the possible implementations;
@@ -362,3 +360,6 @@ they added a [strip shebang](https://github.com/nodejs/node/blob/master/lib/inte
 enables running node scripts from the shell.
 
 It would be even nicer, if `gorun` could come as part of the standard tooling, such as `gofmt` and `godoc`.
+
+This was first published through [gists](https://gist.github.com/posener/73ffd326d88483df6b1cb66e8ed1e0bd).
+

@@ -1,9 +1,7 @@
 ---
 layout: post
-title: Function Failure Reporting: Error or OK
+title: Function Failure Reporting - Error or OK
 ---
-
-This was first published through [gists](https://gist.github.com/posener/a303becac35835ad7bf5e15fe061893e).
 
 Go's ["multiple return values"](https://golang.org/doc/effective_go.html#multiple-returns)
 feature, can be used for several purposes. Among them for failure reporting to the function caller.
@@ -162,3 +160,6 @@ Guidelines to prefer an OK `bool` over `error`:
 
 I would love to hear your opinions about this subject. If you agree, disagree, or have in mind more aspects of
 this problem, please comment below.
+
+This was first published through [gists](https://gist.github.com/posener/a303becac35835ad7bf5e15fe061893e).
+

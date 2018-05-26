@@ -3,8 +3,6 @@ layout: post
 title: Be Careful with Table Driven Tests and t.Parallel()
 ---
 
-This was first published through [gists](https://gist.github.com/posener/92a55c4cd441fc5e5e85f27bca008721).
-
 We Gophers, love table-driven-tests, it makes our unit-testing structured, and makes it easy to add different
 test cases with ease.
 
@@ -179,3 +177,5 @@ This “common mistake” issue is pretty disturbing and catches often even expe
 
 * change in the language,
 * or have a linter for (Maybe in `vet`, now that is running as part of go test in v1.10).
+
+This was first published through [gists](https://gist.github.com/posener/92a55c4cd441fc5e5e85f27bca008721).
