@@ -1,15 +1,35 @@
 /* from https://help.farbox.com/pygments.html */
 
 code {
-  font-family:'Courier New', Courier, monospace;
-  font-size: 14px;
-  background-color: #e1e7f2;
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace ;
+    font-size: 13.6px ;
+    background-color: #f6f8fa;
 }
 
 .highlight  {
-    background-color: #e1e7f2;
-    margin: 5px 0 5px 0;
-    padding: 5px 5px 5px 5px;
+    line-height: 19.72px ;
+    background-color: #f6f8fa;
+    border-bottom-left-radius: 3px ;
+    border-bottom-right-radius: 3px ;
+    border-top-left-radius: 3px ;
+    border-top-right-radius: 3px ;
+    box-sizing: border-box ;
+    color: #24292e ;
+    display: block ;
+    margin-bottom: 0px ;
+    margin-left: 0px ;
+    margin-right: 0px ;
+    margin-top: 0px ;
+    overflow-x: auto ;
+    overflow-y: auto ;
+    padding-bottom: 16px ;
+    padding-left: 16px ;
+    padding-right: 16px ;
+    padding-top: 16px ;
+    text-size-adjust: 100% ;
+    white-space: pre ;
+    word-break: normal ;
+    word-wrap: normal ;
 }
 
 .highlight .c { color: #408080; font-style: italic } /* Comment */

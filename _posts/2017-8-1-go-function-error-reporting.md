@@ -161,5 +161,4 @@ Guidelines to prefer an OK `bool` over `error`:
 I would love to hear your opinions about this subject. If you agree, disagree, or have in mind more aspects of
 this problem, please comment below.
 
-This was first published through [gists](https://gist.github.com/posener/a303becac35835ad7bf5e15fe061893e).
-
+### This was first published through [gists](https://gist.github.com/posener/a303becac35835ad7bf5e15fe061893e).
