@@ -6,13 +6,15 @@ title: Story: Writing Scripts with Go
 This was first published through [gists](https://gist.github.com/posener/73ffd326d88483df6b1cb66e8ed1e0bd).
 
 This is a story about how I tried to use Go for scripting. 
-In this story, I’ll discuss the need for a Go script, how we would expect it to behave and the possible implementations; During the discussion I’ll deep dive to scripts, shells, and shebangs.
+In this story, I’ll discuss the need for a Go script, how we would expect it to behave and the possible implementations;
+During the discussion I’ll deep dive to scripts, shells, and shebangs.
 Finally, we’ll discuss solutions that will make Go scripts work.
 
 
 ## Why Go is good for scripting?
 
-While python and bash are popular scripting languages, C, C++ and Java are not used for scripts at all, and some languages are somewhere in between.
+While python and bash are popular scripting languages, C, C++ and Java are not used for scripts at all, and some 
+languages are somewhere in between.
 
 Go is very good for a lot of purposes, from writing web servers, to process management, and some say even systems.
 In the following article, I argue, that in addition to all these, Go can be used, easily, to write scripts.
@@ -20,8 +22,10 @@ In the following article, I argue, that in addition to all these, Go can be used
 What makes Go good for scripts?
 
 - Go is simple,readable, and not too verbose. This makes the scripts easy to maintain, and relatively short.
-- Go has many libraries, for all sorts of uses. This makes the script short and robust, assuming the libraries are stable and tested.
-- If most of my code is written in Go, I prefer to use Go for my scripts as well. When a lot of people are collaborating code, it is easier if they all have full control over the languages, even for the scripts.
+- Go has many libraries, for all sorts of uses. This makes the script short and robust, assuming the libraries are 
+stable and tested.
+- If most of my code is written in Go, I prefer to use Go for my scripts as well. When a lot of people are collaborating 
+code, it is easier if they all have full control over the languages, even for the scripts.
 
 ## Go is 99% There Already
 
@@ -30,10 +34,12 @@ Using Go’s  `run` subcommand: if you have a script named `my-script.go`, you c
 
 I think that the `go run` command, needs a bit more attention in this stage. Let’s elaborate about it a bit more.
 
-What makes Go different from bash or python is that bash and python are interpreters - they execute the script while they read it.
+What makes Go different from bash or python is that bash and python are interpreters - they execute the script while 
+they read it.
 On the other hand, when you type `go run`, Go compiles the Go program, and then runs it.
 The fact that the Go compile time is so short, makes it look like it was interpreted.
-it is worth mentioning “they” say “`go run` is just a toy", but if you want scripts, and you love Go, this toy is what you want.
+it is worth mentioning “they” say “`go run` is just a toy", but if you want scripts, and you love Go, this toy is 
+what you want.
 
 
 ## So we are good, right?
@@ -43,7 +49,8 @@ The problem is that I'm lazy, and when I run my script I want to type `./my-scri
 
 Let’s discuss a simple script that has two interactions with the shell:
 it gets an input from the command line, and sets the exit code.
-Those are not all the possible interactions (you also have environment variables, signals, stdin, stdout and stderr), but two problematic ones with shell scripts.
+Those are not all the possible interactions (you also have environment variables, signals, stdin, stdout and stderr), 
+but two problematic ones with shell scripts.
 
 The script writes “Hello”, and the first argument in the command line, and exits with the code 42:
 ```go
@@ -128,9 +135,12 @@ You set the shebang line according to the language that you wrote your script in
 It is also common to use the [`env`](http://www.gnu.org/software/coreutils/manual/html_node/env-invocation.html#env-invocation)
 command as the script runner, and then an absolute path to the interpreter command is not necessary.
 For example: `#! /usr/bin/env python` to run the python interpreter with the script. 
-For example: if a script named `example.py` has the above shebang line, and it is executable (you executed `chmod +x example.py`), then by running it in the shell with the command `./example.py arg1 arg2`, the shell will see the shebang line, and starts this chain reaction:
+For example: if a script named `example.py` has the above shebang line, and it is executable 
+(you executed `chmod +x example.py`), then by running it in the shell with the command `./example.py arg1 arg2`, 
+the shell will see the shebang line, and starts this chain reaction:
 
-The shell runs `/usr/bin/env python example.py arg1 arg2`. This is actually the shebang line plus the script name plus the extra arguments.
+The shell runs `/usr/bin/env python example.py arg1 arg2`. This is actually the shebang line plus the script name
+plus the extra arguments.
 The command invokes `/usr/bin/env` with the arguments: `/usr/bin/env python example.py arg1 arg2`.
 The `env` command invokes `python` with `python example.py arg1 arg2` arguments
 `python` runs the `example.py` script with `example.py arg1 arg2` arguments.
@@ -167,14 +177,17 @@ $ ./example.go
 
 What happened?
 
-The shebang mechanism sends "go run" as one argument to the `env` command as one argument, and there is no such command, typing `which “go run”` will result in a similar error.
+The shebang mechanism sends "go run" as one argument to the `env` command as one argument, and there is no such command,
+typing `which “go run”` will result in a similar error.
 
 ### 2. Second Attempt:
 
 A possible solution could be to put `#! /usr/local/go/bin/go run` as the shebang line.
-Before we try it out, you can already spot a problem: the go binary is not located in this location in all environments, so our script will be less compatible with
+Before we try it out, you can already spot a problem: the go binary is not located in this location in all environments,
+so our script will be less compatible with
 different go installations.
-Another solution is to use `alias gorun="go run"`, and then change the shebang to `#! /usr/bin/env gorun`, in this case we will need to put the alias in every system that we run this script.
+Another solution is to use `alias gorun="go run"`, and then change the shebang to `#! /usr/bin/env gorun`, in this case
+we will need to put the alias in every system that we run this script.
 
 Output:
 ```bash
@@ -193,11 +206,13 @@ a comment line indicator. Go compiler fails to read the file, since the line sta
 
 ### 3. The Workaround:
 
-When no shebang line is present, different shells will fallback to different interpreters. Bash will fallback to run the script with itself, zsh for example, will fallback to sh.
+When no shebang line is present, different shells will fallback to different interpreters. Bash will fallback to run
+the script with itself, zsh for example, will fallback to sh.
 This leaves us with a workaround, as also mentioned in
 [StackOverflow](https://stackoverflow.com/questions/7707178/whats-the-appropriate-go-shebang-line).
 
-Since `//` is a comment in Go, and since we can run `/usr/bin/env` with `//usr/bin/env` (`//` == `/` in a path string), we could set the first line to:
+Since `//` is a comment in Go, and since we can run `/usr/bin/env` with `//usr/bin/env` (`//` == `/` in a path string),
+we could set the first line to:
 
 `//usr/bin/env go run "$0" "$@"`
 
@@ -217,7 +232,8 @@ Explanation:
 
 We are getting close: we see the output but we have some errors and the status code is not correct.
 Let's see what happened here.
-As we said, bash did not meet any shebang, and chose to run the script as `bash ./example.go world` (this will result in the same output if you'll try it).
+As we said, bash did not meet any shebang, and chose to run the script as `bash ./example.go world` (this will result
+in the same output if you'll try it).
 That's interesting - running a go file with bash :-) Next, bash reads the first line
 of the script, and ran the command: `/usr/bin/env go run ./example.go world`. "$0"
 Stands for the first argument and is always the name of the file that we ran. "$@" stands for all the command line arguments.
@@ -278,7 +294,8 @@ languages as my scripting languages (such as Go :-) ).
 # Lucky Us, We Have [`gorun`](https://github.com/erning/gorun)
 
 
-`gorun` does exactly what we wanted. You put it in the shebang line as `#! /usr/bin/env gorun`, and make the script executable. That’s it, You can run it from your shell, just as we wanted!
+`gorun` does exactly what we wanted. You put it in the shebang line as `#! /usr/bin/env gorun`, and make the script
+executable. That’s it, You can run it from your shell, just as we wanted!
 
 
 ```bash
@@ -290,7 +307,7 @@ $ echo $?
 
 Sweet!
 
-### The Caveat: Compilability
+### The Caveat: Comparability
 
 
 Go fails compilation when it meets the shebang line (as we saw before).
@@ -309,7 +326,8 @@ Those two options can’t live together. We must choose:
 You can’t have both!
 
 
-Another issue, is that when the script lies in a go package that you compile. The compiler will meet this go file, even though it is not part of the files that are needed to be loaded by the program, and will fail the compilation.
+Another issue, is that when the script lies in a go package that you compile. The compiler will meet this go file,
+even though it is not part of the files that are needed to be loaded by the program, and will fail the compilation.
 A workaround for that problem is to remove the `.go` suffix, but then you can’t enjoy tools such as `go fmt`.
 
 # Final Thoughts
@@ -332,12 +350,15 @@ Standard: the script doesn’t need anything beside the standard library.
 
 As it seems, there is no perfect solution, and I don’t see why we shouldn’t have one.
 It seems like the easiest, and least problematic way to run Go scripts is by using the `go run` command.
-It is still too ‘verbose’ to my opinion, and can’t be “executable”, and the exit code is incorrect, which makes it hard to tell if the script was completed successfully.
+It is still too ‘verbose’ to my opinion, and can’t be “executable”, and the exit code is incorrect, which makes it hard
+to tell if the script was completed successfully.
 
 This is why I think there is still work do be done in this area of the language.
 I don’t see any harm in changing the language to ignore the shebang line.
 This will solve the execution issue, but a change like this probably won't be accepted by the Go community.
 
-My colleague brought to my attention the fact that the shebang line is also illegal in javascript. But, in node JS, they added a [strip shebang](https://github.com/nodejs/node/blob/master/lib/internal/module.js#L48) function which enables running node scripts from the shell.
+My colleague brought to my attention the fact that the shebang line is also illegal in javascript. But, in node JS,
+they added a [strip shebang](https://github.com/nodejs/node/blob/master/lib/internal/module.js#L48) function which 
+enables running node scripts from the shell.
 
 It would be even nicer, if `gorun` could come as part of the standard tooling, such as `gofmt` and `godoc`.

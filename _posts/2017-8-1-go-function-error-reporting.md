@@ -67,7 +67,8 @@ But what if the function can fail, and its scope can't deal with that failure? a
 we have two options here. Let's consider them carefully.
 
 When my function is very simple, I can use the OK bool. It can fail, but when it
-fails, the caller knows why. Good examples from the go language are not function calls - but languge syntax, which use the OK `bool` convention:
+fails, the caller knows why. Good examples from the go language are not function calls - but language syntax,
+which use the OK `bool` convention:
 
 1. The interface assertion: `val, ok := foo.(Bar)`, if the `ok` value is `false`, 
 it is clear that `foo` is not of type `Bar`, we don't have any other option here.
