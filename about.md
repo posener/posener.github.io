@@ -4,4 +4,5 @@ title: About
 permalink: /about/
 ---
 
-I am a software developer.
+Software developer at Stratoscale and at home.
+

@@ -57,6 +57,7 @@ h2 {
 
 h3 {
   font-size: 20px;
+  color: $darkerGray;
 }
 
 h4 {
@@ -71,7 +72,17 @@ p {
 a {
   color: $blue;
   text-decoration: none;
-	cursor: pointer;
+  cursor: pointer;
+  &:hover, &:active {
+    color: $blue;
+  }
+}
+
+a.pageLink {
+  color: $blue;
+  text-decoration: none;
+  margin-left: 10px;
+  cursor: pointer;
   &:hover, &:active {
     color: $blue;
   }
@@ -255,12 +266,10 @@ nav {
 
 .post {
   blockquote {
-    margin: 1.8em .8em;
-    border-left: 2px solid $gray;
-    padding: 0.1em 1em;
+    margin: 10px 10px;
+    border-left: 1px solid $gray;
+    padding: 5px 5px;
     color: $gray;
-    font-size: 22px;
-    font-style: italic;
   }
 
   .comments {
