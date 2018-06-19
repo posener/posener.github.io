@@ -57,12 +57,10 @@ h2 {
 
 h3 {
   font-size: 20px;
-  color: $darkerGray;
 }
 
 h4 {
   font-size: 18px;
-  color: $gray;
 }
 
 p {
@@ -266,9 +264,9 @@ nav {
 
 .post {
   blockquote {
-    margin: 10px 10px;
-    border-left: 1px solid $gray;
-    padding: 5px 5px;
+    margin-left: 10px;
+    padding-left: 10px;
+    border-left: 1px solid $lightGray;
     color: $gray;
   }
 
