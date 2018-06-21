@@ -17,40 +17,11 @@ I've been following the project for a while now. It has a very high pulse, with 
 branch on a daily basis. The main contributors are very responsive for issues :clap: .
 It comes with versioned releases, and provide binaries or a docker container for it's command line tool.
 
-Lets give it a test and use the command line on the example swagger file from the [previous post](/openapi-intro#example).
-
 ### Example
 
-I personally prefer to run the tool from a docker container and not with downloaded binaries - This
-is easier in the scripts and build systems - once you have docker running on a given machine, you don't need to install
-anything else and scripts just work (If the image does not exists, the docker engine will pull it automatically).
-
-The command below is a tweak from the one in
-[go-swagger install docs](https://github.com/go-swagger/go-swagger/blob/master/docs/install.md).
-It assumes that your project is in the `GOPATH` and you are currently in the directory that has
-a `swagger.yaml` file. It also uses a version in the container tag - I like to keep my scripts consistent and control
-the version I am using, so the generated code won't suddenly change after running the script. 
-
-To create a command `swagger`, we can create a bash alias with the following code:
-
-```bash
-$ alias swagger=alias swagger='docker run --rm -e GOPATH=${GOPATH}:/go -v $(pwd):$(pwd) -w $(pwd) -u $(id -u):$(id -u) quay.io/goswagger/swagger:0.14.0'
-```
-
-To test that it works:
-
-```bash
-$ swagger version
-version: 0.14.0
-commit: 25e637c5028dee7baf8cdf5d172ccb28cb8e5c3e
-```
-
-You can add this alias command line to your `~/.bashrc` file in order to make it available any time you get a bash shell.
-
-> If you don't want to use the docker command, installing the binary in one of your `PATH`s should
-  make the command available.
-
-OK, Let's generate some go code.
+First, follow the [docs](https://github.com/go-swagger/go-swagger/blob/master/docs/install.md) to install
+the `swagger` command.
+In this example we'll use the [`swagger.yaml` from the previous post](/openapi-intro#example).
 
 ### Generating a Server
 
@@ -61,12 +32,12 @@ the current directory and to be somewhere inside the `GOPATH`.
 ```bash
 $ # Validate the swagger file
 $ swagger validate ./swagger.yaml
-2018/06/02 08:55:14 
 The swagger spec at "./swagger.yaml" is valid against swagger specification 2.0
 $ # Generate server code
 $ swagger generate server
 $ # go get dependencies, alternatively you can use `dep init` or `dep ensure` to fix the dependencies.
 $ go get -u ./...
+$ # The structure of the generated code
 $ tree -L 1
 .
 ├── cmd
@@ -74,9 +45,10 @@ $ tree -L 1
 ├── models
 ├── restapi
 └── swagger.yaml
+$ # Run the server in a background process
 $ go run cmd/minimal-pet-store-example-server/main.go --port 8080 &
-  2018/06/02 09:40:12 Serving minimal pet store example at http://127.0.0.1:8080
-$ # go-swagger serves the swagger scheme for tools usage
+  09:40:12 Serving minimal pet store example at http://127.0.0.1:8080
+$ # go-swagger serves the swagger scheme on /swagger.json path:
 $ curl -s http://127.0.0.1:8080/swagger.json | head
   {
     "consumes": [
@@ -92,7 +64,6 @@ $ # Test list pets
 $ curl -i http://127.0.0.1:8080/api/pets
 HTTP/1.1 501 Not Implemented
 Content-Type: application/json
-Date: Sat, 02 Jun 2018 06:41:31 GMT
 Content-Length: 50
 
 "operation pet.List has not yet been implemented"
@@ -102,7 +73,6 @@ $ curl -i http://127.0.0.1:8080/api/pets \
     -d '{"kind":"cat"}'
 HTTP/1.1 422 Unprocessable Entity
 Content-Type: application/json
-Date: Sat, 02 Jun 2018 06:53:06 GMT
 Content-Length: 49
 
 {"code":602,"message":"name in body is required"}
@@ -160,7 +130,7 @@ When running it, we get the expected 501 error:
 
 ```bash
 $ go run main.go 
-2018/06/16 15:57:53 unknown error (status 501): {resp:0xc4204c2000} 
+  15:57:53 unknown error (status 501): {resp:0xc4204c2000}
 exit status 1
 ```
 
