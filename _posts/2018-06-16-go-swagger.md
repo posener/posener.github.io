@@ -136,7 +136,7 @@ exit status 1
 
 ### Implement a method
 
-As you can see, the auto generated go code reutnrs 501 status code (not implemented HTTP error) for all the routes we defined.
+As you can see, the auto generated go code returns 501 status code (not implemented HTTP error) for all the routes we defined.
 Implementing what I like to call "business logic" of the generated server is done in the
 `restapi/configure_minimal_pet_store_example.go` file.
 This file is auto-generated, and it is unique - it will not be overwritten in a following invocation of a
