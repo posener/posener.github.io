@@ -3,13 +3,13 @@ layout: post
 title: Swagger with Go Part 2 - go-swagger
 ---
 
-In the [previous post](/openapi-intro) I gave a short intro to the open API (Swagger) specification, and showed
+In the [previous post](/openapi-intro), I gave a short intro to the open API (Swagger) specification, and showed
 some tooling around it.
-In this post I will elaborate about go-swagger, a tool that generates Go code from swagger files.
+In this post, I will elaborate on go-swagger, a tool that generates Go code from swagger files.
 
 ## go-swagger - Code Generation from Swagger
 
-[go-swagger](https://github.com/go-swagger/go-swagger) is one of the tools for go developers to generate go code from
+[go-swagger](https://github.com/go-swagger/go-swagger) is a tool for go developers to generate go code from
 swagger files. It uses various libraries from thr [go-openapi github organization](https://github.com/go-openapi)
 to handle the swagger specification and swagger files.
 
@@ -27,7 +27,7 @@ In this example we'll use the [`swagger.yaml` from the previous post](/openapi-i
 
 Follow the bash commands below to see how to generate and run a Go server from a swagger file.
 The only requirements for this to work is to have a `swagger.yaml` in
-the current working directory that this directory will be somewhere inside the `GOPATH`.
+the current working directory, and that this directory will be somewhere inside the `GOPATH`.
 
 ```bash
 $ # Validate the swagger file
@@ -136,17 +136,17 @@ exit status 1
 
 ### Implement a method
 
-As can be seen, the auto generated go code reutnrs 501 status code (not implemented HTTP error) for all the routes we defined.
-Implementing, what I like to call, "business logic" of the generated server is done in the
+As you can see, the auto generated go code reutnrs 501 status code (not implemented HTTP error) for all the routes we defined.
+Implementing what I like to call "business logic" of the generated server is done in the
 `restapi/configure_minimal_pet_store_example.go` file.
-This file is auto-generated, and it is special - it will not be overwritten in a following invocation of a
+This file is auto-generated, and it is unique - it will not be overwritten in a following invocation of a
 `generate server` command.
 As go-swagger suggest, you are allowed, and you should modify this file. It is created once - only when it does not
 exist.
 
 For the sake of the example, let's implement the pet list operation.
 
-In the file we will find this piece of code:
+In the file we find this piece of code:
 
 ```go
 func configureAPI(api *operations.MinimalPetStoreExampleAPI) http.Handler {
@@ -158,7 +158,7 @@ func configureAPI(api *operations.MinimalPetStoreExampleAPI) http.Handler {
 }
 ```
 
-As expected, the current implementation returns `middleware.NotImplemented` which implements the `middleware.Responder`
+As expected, the auto-generated code returns `middleware.NotImplemented`, implementing the `middleware.Responder`
 interface - which is similar in many ways to the `http.ResponseWriter` interface:
 
 ```go
@@ -169,7 +169,7 @@ type Responder interface {
 }
 ```
 
-For our convenience, the generated code include responses that we defined in the `swagger.yaml` file, for every operation.
+For our convenience, the generated code includes responses for every operation that we defined in the `swagger.yaml` file.
 Let's return a fixed list of pets for that API, and filter it by kind if the kind keyword was given in the query string.
 
 ```go
@@ -214,8 +214,8 @@ $ go run main.go -kind=dog
 ## Things that can be Improved
 
 Here I listed several things that I think need to be improved.
-I want to emphasize, this is **my opinion**, and I think that dealing with them can make
- **the really great go-swagger superb**.
+I want to emphasize that this is **my opinion**, and I think that dealing with them can make
+ **the already great** go-swagger superb.
 
 ### 1. Painful `configure_*.go`
 
@@ -227,7 +227,7 @@ The `restapi/configure_*.go` file, showed [above](#implement-a-method), feels ki
 
 ### 2. Required Fields
 
-In the model definitions, required fields are generated as pointers, and optional fields are values.
+In the model definitions, required fields are generated as pointers, and optional fields are generated as values.
 Foe example, the `Pet` model in the example with a required field `Name` and an optional field `Kind` and `ID`,
 is generated as follows (The `readonly` property is yet to be supported):
 
@@ -239,45 +239,43 @@ type Pet struct {
 }
 ```
 
-The reason for this, as far as I understand is to know that the required field was actually passed.
+The reason for this, as far as I understand, is to guarantee that the required field was actually passed.
 In the AWS Go SDK a similar approach is taken, [but for optional fields](https://github.com/aws/aws-sdk-go/issues/114).
-This approach has it's disadvantages:
+But this approach has it's disadvantages:
 
 * Optional fields: If I get a Pet with `Kind == ""`, how can I know if it is an empty string or was not given at all? 
-* Not fun to use: assigning and reading pointer variables can be painful, and in a lot of times helper functions are
+* Not fun to use: assigning and reading pointer variables can be painful, and many times helper functions are
   needed. The [`swag`](https://github.com/go-openapi/swag) package is a helper package to make the usage easier.
   
 ### 3. Hard to Get an `http.Handler`
 
-The go-swagger generates a full server, with main function and command line arguments which makes
-a very fast 0-to-serve flow. This is really nice.
-But sometimes one might have it's own main function, and it's own framework that includes environment variables, 
-logging, tracing, etc. In this situation, Go has a standard `http.Handler` that I would expect the autogenerated
+The go-swagger generates a full server, with a main function and command line arguments which makes
+a very fast 0-to-serve flow. It's really nice, but sometimes we might have our own main function, and it's own framework that includes environment variables, logging, tracing, etc. In this situation, Go has a standard `http.Handler` that I would expect the autogenerated
 code will expose.
 It is not that easy to get this handler with the current design of go-swagger.
 
 ### 4. Hard to Consume and to Customize Generated Client
 
 The generated client works out of the box - as demonstrated in the example [above](#generating-a-client).
-Never the less, customizing the client is hard, mainly due to the fact that it uses non-standard entities.
+Nevertheless, customizing the client is hard, mainly due to the fact that it uses non-standard entities.
 For example, the client has a `SetTransport` method, which accepts a go-swagger's `runtime.ClientTransport`.
 Setting a new transport with customized HTTP client or custom URL is not a trivial task.
 
 Another issue is that the client **lacks interfaces**. When I write a package that uses a client, I need an interface
-of the client so I can mock it in the package's unittests. The generated client does not provide such interface.
+for the client so I can mock it in the package's unit tests. The generated client does not provide such interface.
  
 ### 5. Not using standard `time.Time`
 
 For various reasons, a field that is defiend as `type: string, format: date-time` is of format `strfmt.DateTime`
 of the `github.com/go-openapi/strfmt` package and not `time.Time`.
-This requires sometimes tedious type conversion when working with other libraries which expect the standard `time.Time`.
+This sometimes requires tedious type conversion when working with other libraries which expect the standard `time.Time`.
 
 ### 6. Versioning of go-openapi libraries
 
-The go-openapi libraries are not versioned and sadly occasionally they break the API.
+The go-openapi libraries are not versioned and unfortunately they occasionally they break the API.
 
 ## Stay Tuned
 
 In the next post, I'll show a more go-ish flavor of go-swagger we developed in Stratoscale for our own services.
 It uses the fact that go-swagger enables defining custom templates for some of the generated files,
-and helped us overcome some of the pain parts we had with the go-swagger implementation.
+and helped us overcome some of the difficulties we had with the go-swagger implementation.
