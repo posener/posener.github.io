@@ -217,5 +217,5 @@ If the server does not expose such endpoint but you have the swagger file locall
 
 # Stay Tuned
 
-In the following post I'll talk about [go-swagger](https://github.com/go-swagger/go-swagger) - a Go code generation
+In the [following post](/go-swagger) I'll talk about [go-swagger](https://github.com/go-swagger/go-swagger) - a Go code generation
 tool from swagger files.
