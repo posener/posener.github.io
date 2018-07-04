@@ -9,10 +9,10 @@ available as [open source](https://github.com/Stratoscale/swagger).
 
 ## Into
 
-Stratoscale's swagger is a modified go-swagger. It takes advantage of the fact that swagger expose a flag to run it 
-with custom templates. Those template files are the one that are being used to generate the Go code. Not all of the 
-files can be modified - but it is a good thing - if you change less things, you can easily upgrade go-swagger versions,
-which include bug fixes and improvements.
+Stratoscale's swagger is a **slightly** modified go-swagger. It takes advantage of the fact that swagger expose a
+flag to run it with custom templates. Those template files are the one that are being used to generate the Go code. 
+Not all of the files can be modified - but it is a good thing - if you change less things, you can easily upgrade
+go-swagger versions, which include bug fixes and improvements.
 
 ## Usage
 
@@ -63,7 +63,19 @@ Our solution was to modified the `restapi/configure_*.go` file. We introduced a 
 
 Our configure file is re-generated every time `swagger` is called, and it should not be modified.
 
-##### 2. Expose Service Interfaces
+##### 2. Expose http.Handler
+
+As described in the [previous post](/go-swagger/#3-hard-to-get-an-httphandler), `go-swagger` gives a fully functional
+server command. But customizing it is hard, and specially getting the `http.Handler` to run with your own code.
+
+Our `restapi` package exposes an `restapi.Handler` function, that should be called with `restapi.Config` struct.
+This struct contains the configuration of the server - the managers that implement all the server functionality ([see
+next section](#3.-expose-service-interfaces)).
+
+The function returns an `http.Handler` that can be used as you wish - wrap it with middlewares and serve it with
+whatever go server you like.
+
+##### 3. Expose Service Interfaces
 
 We added interfaces section, that are exposed from the `restapi` package. Each `swagger` tag is exposed through
 a `<tag-name>API` interface, and contains all the operations that belong to this tag.
@@ -85,16 +97,12 @@ type PetAPI interface {
 }
 ```
 
-##### 3. Expose http.Handler
+Those interfaces are defined as fields in the `restapi.Config` struct that configures the server `http.Handler`.
+This enables testing the http handler routing and middleware without actually invoking the business logic.
+In the example [main_test.go](https://github.com/Stratoscale/swagger/blob/master/example/main_test.go), the http handler
+is configured with mocked "managers".
 
-As described in the [previous post](/go-swagger/#3-hard-to-get-an-httphandler), `go-swagger` gives a fully functional
-server command. But customizing it is hard, and specially getting the `http.Handler` to run with your own code.
-
-Our `restapi` package exposes an `restapi.Handler` function, that should be called with `restapi.Config` struct.
-This struct contains the configuration of the server - the managers that implement all the server functionality.
-The function returns an `http.Handler` that can be used as you wish.
-
-This also make the usage of standard http
+It also enables the "managers" encapsulated, they only implement the interface and can be tested separately.
 
 ##### 4. Usage of context.Context
 
@@ -115,7 +123,6 @@ Take care not to abuse the context function, and use it only for "contextual" da
 As described in the [previous post](https://posener.github.io/go-swagger/#4-hard-to-consume-and-to-customize-generated-client),
 the go-swagger generated client code is hard to consume, customize and it exposes non-standard options.
 We decided to change it's template too, and introduce the following changes:
-
 
 ##### 1. Creating a New Client
 
@@ -143,7 +150,7 @@ you can pass a mock object and test that the right calls where made and not make
 For example:
 
 ```go
-MyFunc(client ec2iface.EC2API) {
+func MyFunc(client ec2iface.EC2API) {
 	resp, err := client.RunInstances(&ec2.RunInstanceInput{...})
 	[...]
 }
