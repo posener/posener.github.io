@@ -70,12 +70,12 @@
 
                 let img = document.createElement('img');
                 img.src = '/images/pin.png';
-                img.width = 20;
+                img.width = 15;
 
                 let link = document.createElement('a');
                 link.className = 'pageLink';
-                link.appendChild(img);
                 link.href = '#' + node.getAttribute('id');
+                link.appendChild(img);
                 node.appendChild(link);
             });
 

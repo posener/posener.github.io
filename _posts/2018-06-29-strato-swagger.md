@@ -9,34 +9,38 @@ available as [open source](https://github.com/Stratoscale/swagger).
 
 ## Into
 
-Stratoscale's swagger is a **slightly** modified go-swagger. It takes advantage of the fact that swagger expose a
+Stratoscale's swagger (or Stratoscale/swagger) is a **slightly** modified go-swagger. It takes advantage of the fact that swagger expose a
 flag to run it with custom templates. Those template files are the one that are being used to generate the Go code. 
 Not all of the files can be modified - but it is a good thing - if you change less things, you can easily upgrade
 go-swagger versions, which include bug fixes and improvements.
 
 ## Usage
 
-Since Stratoscale's version is using the actual `swagger` command, just with custom template files, we found that
-the easiest way to run it, is with a docker container.
+Since Stratoscale/swagger is using the actual `swagger` command, just with custom template files, we found that
+the easiest way to provide a command line tool, is with a docker container - a one that contains both the
+swagger command, our own templates and runs the swagger command with the appropriate flags.
 It is also one of the way to run swagger from the
 [go-swagger install docs](https://github.com/go-swagger/go-swagger/blob/master/docs/install.md).
 
-I personally prefer to run the tool from a docker container and not with downloaded binaries - This
+I personally prefer to run tools with docker container and not with downloaded binaries - This
 is easier in the scripts and build systems - once you have docker running on a given machine, you don't need to install
 anything else and scripts just work (If the image does not exists, the docker engine will pull it automatically).
 
-It assumes that your project is in the `GOPATH` and you are currently in the directory that has
-a `swagger.yaml` file. It also uses a version in the container tag - I like to keep my scripts consistent and control
-the version I am using, so the generated code won't suddenly change after running the script. 
-
-To create a command `swagger`, we can create a bash alias with the following code:
+The way to install Stratoscale/swagger is to use the following bash alias:
 
 ```bash
 $ alias swagger='docker run --rm -e GOPATH=${GOPATH}:/go -v $(pwd):$(pwd) -w $(pwd) -u $(id -u):$(id -u) stratoscale/swagger:v1.0.14'
 ```
 
-> Check out the [Docker Hub tags page](https://hub.docker.com/r/stratoscale/swagger/tags) for the latest version
+It is similar to the one described in go-swagger docs, but has the following changes:
 
+1. Uses Stratoscale's container image
+2. Uses a versioned image - to maintain reproducibility of builds.
+3. Removed not needed `-it` flags (stand for interactive and TTY docker run)
+4. Mounts `$(pwd)` and not `${HOME}` which will mount less data into the container and also work if you are not under `${HOME}`.
+5. Added `-u` which changes the user in the container, so the generated files won't be owned by the `root` user.
+
+After defining the alias, a `swagger` command will be available. 
 To test that it works:
 
 ```bash
@@ -45,9 +49,18 @@ version: 0.14.0
 commit: 25e637c5028dee7baf8cdf5d172ccb28cb8e5c3e
 ```
 
-You can add the alias command line to your `~/.bashrc` file in order to make it available any time you get a bash shell.
+This command
+assumes your project is in the `GOPATH` and you are currently in the directory that has
+the `swagger.yaml` file.
+
+> * Check out the [Docker Hub tags page](https://hub.docker.com/r/stratoscale/swagger/tags) for the latest version
+> * You can add the alias command line to your `~/.bashrc` file in order to make it available any time you get a bash shell.
 
 ### Features
+
+So what is the difference between Stratoscale/swagger and go-swagger?
+We tried to approach some of the pain points
+in go-swagger described in the [previous post](/go-swagger/#things-that-can-be-improved). They are described below.
 
 #### Improved Server Template
 
@@ -70,9 +83,9 @@ server command. But customizing it is hard, and specially getting the `http.Hand
 
 Our `restapi` package exposes an `restapi.Handler` function, that should be called with `restapi.Config` struct.
 This struct contains the configuration of the server - the managers that implement all the server functionality ([see
-next section](#3.-expose-service-interfaces)).
+next section](#3-expose-service-interfaces)).
 
-The function returns an `http.Handler` that can be used as you wish - wrap it with middlewares and serve it with
+The function returns a standard `http.Handler` that can be used as you wish - wrap it with middlewares and serve it with
 whatever go server you like.
 
 ##### 3. Expose Service Interfaces
@@ -99,10 +112,15 @@ type PetAPI interface {
 
 Those interfaces are defined as fields in the `restapi.Config` struct that configures the server `http.Handler`.
 This enables testing the http handler routing and middleware without actually invoking the business logic.
-In the example [main_test.go](https://github.com/Stratoscale/swagger/blob/master/example/main_test.go), the http handler
-is configured with mocked "managers".
+
+For example, in the [main_test.go](https://github.com/Stratoscale/swagger/blob/master/example/main_test.go) we can see
+testing of the http handler with mocking of all the "managers".
+Those tests specially the expected behavior for authentication and authorization
+since all the business logic is being mocked.
 
 It also enables the "managers" encapsulated, they only implement the interface and can be tested separately.
+What in go-swagger is part of a function that statically sets functions to a router, not is a an encapsulated
+entity that is injected to the router config.
 
 ##### 4. Usage of context.Context
 
@@ -144,31 +162,6 @@ function that returns an `*ec2.EC2` object - the client with the EC2 API. But th
 `ec2iface` with the [`ec2iface.EC2API`](https://github.com/aws/aws-sdk-go/blob/master/service/ec2/ec2iface/interface.go#L62)
 which is just the interface that the same client implements.
 
-Why does it make it easy to consume? Your code can accept the interface and not the struct itself. then, in testings,
-you can pass a mock object and test that the right calls where made and not make actual calls to AWS.
-
-For example:
-
-```go
-func MyFunc(client ec2iface.EC2API) {
-	resp, err := client.RunInstances(&ec2.RunInstanceInput{...})
-	[...]
-}
-```
-
-Then, your main will call it as `MyFunc(ec2.New(awsSession))`, but your test will call it as `MyFunc(&ec2Mock)`.
-
-> Generating a mock to this API can be done easily with [mockery](https://github.com/vektra/mockery).
-> The way I do it is by adding a gen.go in the root directory of my project. This file contains lines like
-> 
-> ```go
-> //go:generate mockery -name EC2 -dir ./vendor/github.com/aws/aws-sdk-go/service/ec2/ec2iface -output ./mocks`
-> ```
-> Assuming you are vendoring your dependencies, after running `go generate` a file `./mocks/EC2API.go` containing
-> a [testify's Mock](https://github.com/stretchr/testify#mock-package) for the EC2API interface should be created.
-
-Back to go-swagger.
-
 go-swagger generates a client object for each service tag. For example, the pet-store client contains two fields
 for the pet-store services:
 
@@ -199,16 +192,86 @@ type API interface {
 }
 ```
 
-Additionally, we generate with mockery the struct `MockAPI` which is a mock for the `API` interface. So it could be 
+Additionally, we generate with [mockery](https://github.com/vektra/mockery) (A tool for generating a mock for a given 
+interface) the type `MockAPI` which is a mock for the `API` interface. So it could be 
 used in tests without the need to generate it by the consumer.
 
-### Example
+##### Client Usage Example
 
-We will go over the [example in the github repository](https://github.com/Stratoscale/swagger/tree/master/example)
+Let's define a type that uses the pet API of our pet store.
 
-#### . Testings
+```go
+type PetUser struct {
+	Pet pet.API
+}
 
-In the [main_test.go](https://github.com/Stratoscale/swagger/blob/master/example/main_test.go) we can see
-testing of the http handler with mocking of all the "managers".
-Those tests specially the expected behavior for authentication and authorization
-since all the business logic is being mocked.
+func (pu *PetUser) Duplicate(ctx context.Context) error {
+	pets, err := pu.Pet.PetList(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("listing pets: %v", err)
+	}
+	for _, p := range pets.Payload {
+		id := p.ID
+		p.ID = 0
+		_, err := pu.Pet.PetCreate(ctx, &pet.CreateParams{Pet: p})
+		if err != nil {
+			return fmt.Errorf("duplicating pet %d: %v", id, err)
+		}
+	}
+	return nil
+}
+```
+
+In the main function, this type could be initiated with the "real" client:
+
+```go
+func main() {
+	var (
+		cl   = client.New(client.Config{})
+		user = PetUser{Pet: cl.Pet}
+		ctx  = context.Background()
+	)
+
+	err := user.Duplicate(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+```
+
+On the other hand, in the `PetUser` unit tests, we can use the client mock:
+
+```go
+func TestPetUser_Duplicate(t *testing.T) {
+	var (
+		m   pet.MockAPI
+		pu  = PetUser{Pet: &m}
+		ctx = context.Background()
+	)
+
+	m.On("PetList", ctx, (*pet.PetListParams)(nil)).
+		Return(&pet.PetListOK{Payload: petList}, nil).
+		Once()
+
+	m.On("PetCreate", ctx, &pet.PetCreateParams{Pet: &models.Pet{Kind: "dog", Name: swag.String("Bonni")}}).
+		Return(&pet.PetCreateCreated{Payload: petList[0]}, nil).
+		Once()
+
+	m.On("PetCreate", ctx, &pet.PetCreateParams{Pet: &models.Pet{Kind: "cat", Name: swag.String("Mitzi")}}).
+		Return(&pet.PetCreateCreated{Payload: petList[1]}, nil).
+		Once()
+
+	err := pu.Duplicate(ctx)
+
+	assert.Nil(t, err)
+	m.AssertExpectations(t)
+}
+```
+
+## Wrap Up
+
+go-swagger is a very powerful framework to the develop high scale REST APIs.
+In stratoscale we found some gaps in integrating go-swagger, using it, and testing it. go-swagger's
+flexibility, and the go language flexibility helped us overcome those gaps, and the result is amazing. 
+
+We thank a lot for the go-swagger team, and hope go-swagger will continue to develop.
