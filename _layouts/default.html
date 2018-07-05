@@ -58,7 +58,7 @@
             The text content of the tag is used to generate the link, so it will fail "gracefully-ish" if you have duplicate heading text.
              */
 
-            var headingNodes = [], results, link,
+            let headingNodes = [], results,
                     tags = ['h2', 'h3', 'h4', 'h5', 'h6'];
 
             tags.forEach(function(tag){
@@ -67,10 +67,15 @@
             });
 
             headingNodes.forEach(function(node){
-                link = document.createElement('a');
+
+                let img = document.createElement('img');
+                img.src = '/images/pin.png';
+                img.width = 15;
+
+                let link = document.createElement('a');
                 link.className = 'pageLink';
-                link.textContent = '¶';
                 link.href = '#' + node.getAttribute('id');
+                link.appendChild(img);
                 node.appendChild(link);
             });
 

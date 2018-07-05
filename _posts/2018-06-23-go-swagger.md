@@ -276,6 +276,6 @@ The go-openapi libraries are not versioned and unfortunately they occasionally t
 
 ## Stay Tuned
 
-In the next post, I'll show a more go-ish flavor of go-swagger we developed in Stratoscale for our own services.
-It uses the fact that go-swagger enables defining custom templates for some of the generated files,
+In the [next post](/strato-swagger), I'll show a more go-ish flavor of go-swagger we developed in Stratoscale for our
+own services. It uses the fact that go-swagger enables defining custom templates for some of the generated files,
 and helped us overcome some of the difficulties we had with the go-swagger implementation.
