@@ -9,7 +9,10 @@ available as [open source](https://github.com/Stratoscale/swagger).
 
 ## Intro
 
-Stratoscale's swagger (or Stratoscale/swagger) is a **slightly** modified go-swagger. It takes advantage of the fact that swagger exposes a flag to run it with custom templates. Those template files are the ones that are being used to generate the Go code. Not all of the files can be modified - but it is a good thing - if you change less things, you can easily upgrade go-swagger versions, which include bug fixes and improvements.
+Stratoscale's swagger (or Stratoscale/swagger) is a **slightly** modified go-swagger. It takes advantage of
+the fact that swagger exposes a flag to run it with custom templates. Those template files are the ones that
+are being used to generate the Go code. Not all of the files can be modified - but it is a good thing - if you
+change less things, you can easily upgrade go-swagger versions, which include bug fixes and improvements.
 
 ## Usage
 
@@ -46,7 +49,8 @@ version: 0.14.0
 commit: 25e637c5028dee7baf8cdf5d172ccb28cb8e5c3e
 ```
 
-This command assumes your project is in the `GOPATH` and you are currently in the directory that has the `swagger.yaml` file.
+This command assumes your project is in the `GOPATH` and you are currently in the directory that has the
+`swagger.yaml` file.
 
 > * Check out the [Docker Hub tags page](https://hub.docker.com/r/stratoscale/swagger/tags) for the latest version
 > * You can add the alias command line to your `~/.bashrc` file in order to make it available any time you get a bash shell.
@@ -54,7 +58,9 @@ This command assumes your project is in the `GOPATH` and you are currently in th
 ### Features
 
 So what is the difference between Stratoscale/swagger and go-swagger?
-We tried to approach some of the pain points in go-swagger described in the [previous post](/go-swagger/#things-that-can-be-improved). They are described below.
+We tried to approach some of the pain points in go-swagger described in the
+[previous post](/go-swagger/#things-that-can-be-improved).
+They are described below.
 
 #### Improved Server Template
 
@@ -87,7 +93,7 @@ whatever go server you like.
 We added interfaces section, that are exposed from the `restapi` package. Each `swagger` tag is exposed through
 a `<tag-name>API` interface, and contains all the operations that belong to this tag.
 
-Using tags to categorize operations is a common methodology in the Open API auto generated code, and It is also
+Using tags to categorize operations is a common methodology in the Open API auto generated code, and it is also
 the practice in `go-swagger`. This enables the user separate different logic entities in the server, we call those
 logical entities "managers".
 
@@ -107,8 +113,10 @@ type PetAPI interface {
 Those interfaces are defined as fields in the `restapi.Config` struct that configures the server `http.Handler`.
 This enables testing the http handler routing and middleware without actually invoking the business logic.
 
-For example, in the [main_test.go](https://github.com/Stratoscale/swagger/blob/master/example/main_test.go) we can see
-testing of the http handler with mocking of all the "managers". Those tests specify the expected behavior for authentication and authorization since all the business logic is being mocked.
+For example, in the [main_test.go](https://github.com/Stratoscale/swagger/blob/master/example/main_test.go)
+we can see testing of the http handler with mocking of all the "managers".
+Those tests specify the expected behavior for authentication and authorization since all the business
+logic is being mocked.
 
 It also enables the "managers" to be encapsulated, they only implement the interface and can be tested separately.
 What in go-swagger is part of a function that statically sets functions to a router, is here a an encapsulated
@@ -236,7 +244,7 @@ On the other hand, in the `PetUser` unit tests, we can use the client mock:
 ```go
 func TestPetUser_Duplicate(t *testing.T) {
 	var (
-		m = pet.MockAPI
+		m   pet.MockAPI
 		pu  = PetUser{Pet: &m}
 		ctx = context.Background()
 	)
