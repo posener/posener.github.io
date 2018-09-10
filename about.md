@@ -4,5 +4,5 @@ title: About
 permalink: /about/
 ---
 
-Software developer at Stratoscale and at home.
+Software developer at Google and at home.
 
