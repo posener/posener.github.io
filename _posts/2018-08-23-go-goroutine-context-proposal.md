@@ -5,8 +5,9 @@ title: Goroutine Context Proposal
 
 The Context design in Go is beautiful and powerful.
 As all things, it can also be improved.
-In this post I will present the main problems I currently see in the context
-system and a backward compatible solution to those problems.
+In this post I will present the main problems I currently see in the context system,
+a backward compatible solution to those problems,
+and a proof of concept library that implements a demo of the solution.
 Hopefully, I could convince that this change is necessary and can
 improve the user experience in the Go language.
 
@@ -25,11 +26,12 @@ The current context implementation is very explicit, which is a good thing.
 It allows the programmer to know exactly where context is modified,
 and what it is going to influence.
 
-But, is it **too explicit**?
+But, it is **too explicit**.
 The context biggest problem is that it is a virus.
 You must pass it around everywhere.
 
-For example, consider the case that we have a call stack of 100 functions.
+Let's take a classic example.
+Consider the case that we have a call stack of 100 functions.
 The 100th function is the only one that needs the context and the context is
 passed to the 1st function.
 There are two ways to deal with this issue.
@@ -39,28 +41,28 @@ Update each function to accept the context as it's first argument and
 to call the next function in the stack with that context object:
 
 ```diff
-func f1(ctx context.Context) {
--      f2()
-+      f2(ctx)
-}
+ func f1(ctx context.Context) {
+-  f2()
++  f2(ctx)
+ }
 
 -func f2() {
 +func f2(ctx context.Context) {
--       f3()
-+       f3(ctx)
-}
+-  f3()
++  f3(ctx)
+ }
 
 [ ... f3 through f98 ... ]
 
 -func f99() {
 +func f99(ctx context.Context) {
--       f100(context.TODO)
-+       f100(ctx)
-}
+-  f100(context.TODO)
++  f100(ctx)
+ }
 
-func f100(ctx context.Context) {
-        <-ctx.Done()
-}
+ func f100(ctx context.Context) {
+   <-ctx.Done()
+ }
 ```
 
 The **wrong** way is to store the context in a place which is globally available.
@@ -82,13 +84,13 @@ The proposed **right** solution works, but it has some drawbacks:
    // F22 remains with the same signature to preserve backward
    // compatibility.
    func F22() {
-          F22Context(context.Background())
+     F22Context(context.Background())
    }
 
    // F22Context has the new needed functionality of accepting and
    // passing the context.
    func F22Context(ctx context.Context) {
-          f23(ctx)
+     f23(ctx)
    }
    ```
 
@@ -130,49 +132,49 @@ Let's discuss two wrong solutions:
 ```diff
 +var gCtx context.Context
 
-func f1(ctx context.Context) {
-+      gCtx = ctx
-       f2()
-}
+ func f1(ctx context.Context) {
++  gCtx = ctx
+   f2()
+ }
 
-func f2() { f3() }
+ func f2() { f3() }
 
-[ ... f3 through f99 remain unchanged ... ]
+ [ ... f3 through f99 remain unchanged ... ]
 
 -func f100(ctx context.Context) {
 +func f100() {
--        <-ctx.Done()
-+        <-gCtx.Done()
-}
+-  <-ctx.Done()
++  <-gCtx.Done()
+ }
 ```
 
-   This solution is very wrong.
-   For instance, it will fail for concurrency reasons.
-   We can't call `f1` from two different goroutines concurrently.
-   Concurrent calls to `f1` will override `gCtx`,
-   which will allow `f100` of the first call to read the context of the second call.
+This solution is very wrong.
+For instance, it will fail for concurrency reasons.
+We can't call `f1` from two different goroutines concurrently.
+Concurrent calls to `f1` will override `gCtx`,
+which will allow `f100` of the first call to read the context of the second call.
 
 - Create a struct that will hold the context.
 
 ```diff
 +type fs struct {ctx context.Context}
 
-func f1(ctx context.Context) {
+ func f1(ctx context.Context) {
 -       f2()
 +       f := fs{ctx: ctx}
 +       f.f2()
-}
+ }
 
 -func f2() { f3() }
 +func (f *fs)f2() { f.f3() }
 
-[ ... f3 through f99 with the same change ... ]
+ [ ... f3 through f99 with the same change ... ]
 
 -func f100(ctx context.Context) {
 +func (f *fs)f100() {
 -        <-ctx.Done()
 +        <-f.ctx.Done()
-}
+ }
 ```
 
 This is quite a big change, and most of the times it won't be as easy as
