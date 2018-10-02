@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Goroutine Context Proposal
+title: Goroutine Scoped Context Proposal
 ---
 
 The Context design in Go is beautiful and powerful.
