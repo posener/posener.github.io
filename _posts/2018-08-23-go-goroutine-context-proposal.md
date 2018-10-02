@@ -368,22 +368,29 @@ package provides, it is still "unclear which Context to use or it is not yet ava
 
 ## Proposal
 
-The proposal discusses why storing the context in the goroutine struct
-can solve all the enumerated problems, without barely any concession.
-It is composed of several required changes, described below.
+The proposal discusses the approach of storing the context in the goroutine struct,
+referred as "**goroutine scoped context**".
+We will see how it can solve all the enumerated problems, without any compromises.
 
 Storing a context object in a "goroutine local storage"
 (analogue to [thread-local storage](https://en.wikipedia.org/wiki/Thread-local_storage)),
 was already discussed in Github issue
 [#21355](https://github.com/golang/go/issues/21355).
-To my opinion the issue discussion had diverged from the original purpose,
+The issue discussion had diverged from the original purpose,
 and the proposal did not cover the essence of the given problem.
 Eventually the issue was closed.
 The reasons of which it was closed are not related to this proposed solution.
 
+The proposal is composed of several required changes, which will define
+the language API for goroutine scoped context.
+After which, we will discuss the correctness of this new definitions.
+
 ### 1. Store a Context object in the Goroutine Struct
 
 First we need to enable the storage of a context object in the goroutine struct.
+We will assume it is possible and dismiss threats of cyclic dependencies
+as "implementation details".
+
 This stage goes hand in hand with a second stage:
 
 ### 2. Add Accessor functions Goroutine Context
@@ -398,8 +405,41 @@ func Get() Context
 func Set(ctx Context)
 ```
 
-By storing the context in the goroutine struct we need to answer the question:
-"Should goroutines have a context?"
+### 3. Update `go` to Propagate the Context
+
+The context should propagate through goroutines.
+The default behavior is that an invoked goroutine gets it's parent context.
+When goroutine **A** is invoking a new goroutine **B**, **B** should get **A**'s context.
+
+### 4. Enable `go` with Context
+
+In case that the invoked goroutine should have a different context than it's
+parent context, we need an option to pass a different context.
+This could be done by adding an option to run a goroutine with a specific context:
+Using `go ctx f()`, or `go ctx, f()`, or any other syntax change.
+
+The new go command could be run with a function call, which is the default behavior
+of propagating the parent context to the new goroutine.
+Or with context object and a function call, which is the new behavior of defining a
+specific context to the new goroutine.
+
+This change is backward compatible, since calling `go` with two argument in not allowed.
+Additionally, checking that `ctx` is of type `context.Context` can be done in compile time.
+
+<!-- Furthermore, it goes hand by hand with the first change, in the direction of making
+the context a first class citizen of the Go language, and not just another package
+in the standard library. -->
+
+If language syntax modification is a limitation here, see
+[appendix I](#appendix-i---syntax-change-alternative).
+
+### Philosophy
+
+Now that we have defined the goroutine scoped context API,
+we have the tools to wander about the essence of goroutine
+scoped context:
+
+#### "Should Goroutines Have a Context?"
 
 Dave Chaney wrote a post about "Context isn't for cancellation"
 [blog post](https://dave.cheney.net/2017/08/20/context-isnt-for-cancellation).
@@ -407,7 +447,7 @@ Even though I disagree with the main issue raised in this post,
 Dave raises a good and valid point, the context object has two independent roles.
 Two roles packed into one object.
 
-It will be easier to address the need for storing the context in the goroutine struct
+It will be easier to address the need for goroutine scoped context
 if we inspect those two independent roles independently:
 
 1. **Liveness**: Indicates whether the context is done.
@@ -415,9 +455,8 @@ if we inspect those two independent roles independently:
    and controlled by the `context.WithCancel`, `context.WithTimeout` and
    `context.WithDeadline` functions.
 
-   Adding the context to the goroutine struct introduces to the Go runtime a
-   substantial capability.
-   Any piece of code can now know if it should still be running.
+   Goroutine scoped context introduces to the Go runtime a substantial capability.
+   Any piece of code will be able to know if it should still be running.
 
    Just to emphasize the strength of such a feature:
    In any piece of code, **literally anywhere**, we could write:
@@ -440,7 +479,7 @@ if we inspect those two independent roles independently:
    ctx, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
    defer cancel()
    context.Set(ctx)
-   // Following functions, or started goroutines will be
+   // Following functions, or invoked goroutines will be
    // timed-out after 100 milliseconds.
    ```
 
@@ -452,8 +491,8 @@ if we inspect those two independent roles independently:
 2. **Values**: Custom key-value pairs that can be retrieved from the context.
    Inspected by the `Value` method and controlled by the `context.WithValue` modifier.
 
-   Adding the context to the goroutine struct introduces a way
-   to ask from any piece of code: "What is the value of 'X'?"
+   Goroutine scoped context introduces a way to ask from any piece of code:
+   "What is the value of 'X'?"
 
    This is delicate question, and has no unclear to me.
    Adding values to the goroutine context should be done
@@ -473,125 +512,68 @@ if we inspect those two independent roles independently:
    a way to obtain those values without explicitly passing the context object through
    a the call stack.
 
-Adding the context accessor functions maintain the explicitness of the previous
-context system.
+Adding the context accessor functions maintain the
+explicitness of the previous context system.
 One could follow exactly where the context has been set and has been used.
 Additionally, since it does not need to be passed through function calls,
 it prevents breaking APIs.
 Finally, it depresses the need to store the context anywhere but a local variable,
 and make the decision of choosing the context clear.
 
-### 3. Update `go` to Propagate the Context
+We've made arguments why the context should be goroutine scoped.
+But let's examine why it should not be functioned scoped.
 
-The context should propagate through goroutines.
-The default behavior is that an invoked goroutine gets it's parent context.
-When goroutine **A** is invoking a new goroutine **B**, **B** should get **A**'s context.
+#### "Should Function Get a Context?"
 
-Since it is the good old context object, which is immutable,
-we can just copy the context variable (a pointer).
+We've enumerated several points for and against function scoped context.
+But we haven't actually discussed the meaning.
+Functions group lines of code that are invoked sequentially.
+Having a unique context specific for those set of lines, have no additional
+value, in any other case but for testing purposes.
 
-### 4. Enable `go` with Context
-
-In case that the invoked goroutine should have a different context than it's
-parent context, we need an option to pass a different context.
-This could be done by adding an option to run a goroutine with a specific context:
-Using `go ctx f()`, or `go ctx, f()`, or any other syntax change.
-
-The new go command could be run with a function call, which is the default behavior
-of propagating the parent context to the new goroutine.
-Or with context object and a function call, which is the new behavior of defining a
-specific context to the new goroutine.
-
-As far as I understand this change can be backward compatible,
-since calling `go` with two argument in not yet allowed,
-and checking that `ctx` is of type `context.Context` can be done in compile time.
-
-Furthermore, it goes hand by hand with the first change, in the direction of making
-the context a first class citizen of the Go language, and not just another package
-in the standard library.
-
-If language syntax modification is a limitation here,
-another option is to add another function to the `context` package:
+Consider the following code.
 
 ```go
-func Go(ctx Context, f func()) {
-  go func() {
-    Set(ctx)
-    f()
-  }()
+func main() {
+  ctx, cancel := context.WithCancel(context.Background())
+  defer cancel()
+  f(ctx)
 }
 ```
 
-This function will run `f` in a new goroutine with the given `ctx`.
-This solution is less preferred than changing the `go` keyword:
-**(1)** Two not important function calls are added to the stack,
-and **(2)** it limits the function signature to be `func()`,
-so more complicated functions should be wrapped with a `func() {}`.
+`main` creates a context with cancel, defer the cancel and runs `f` with the new context.
+If `f` was invoked in a new goroutine this code would make a bit of sense.
+But running `f` in the same goroutine as `main` makes no sense at all -
+the `cancel()` call is cancelling a context that was used for running `f`,
+but it is called after `f` was already finished.
+As long as `main` and `f` share the same goroutine,
+`main` should not pass to `f` any other context but the one it is using.
 
-### 5. Adopting New Conventions
-
-First, new functions should not have the context as their first argument.
-It is no longer needed.
-
-```diff
--func f(ctx context.Context) {
-+func f() {
-+  ctx := context.Get()
-}
-```
-
-Old functions that accept the context object should be deprecated:
-
-```diff
-+// Deprecated, use g instead.
-func f(ctx context.Context) {
-  // Use ctx...
-}
-
-+func g() {
-+  ctx := context.Get()
-+  f(ctx)
-+}
-```
-
-New code that use old style, context accepting functions can simply
-pass `context.Get()`:
-
-```diff
--f(context.TODO())
-+f(context.Get())
-```
+Goroutine scoped context does not eliminate the option to write the above code,
+but it discourage it.
+A function should not get the context by argument, but by `context.Get()`.
 
 ### Conclusions
 
-Having the context stored in the goroutine prevents the need
-to pass it explicitly through the call stack,
-it demolishes the motivation to store the context
-anywhere which is not a local variable,
-and eliminates the reason for existence of `context.TODO`.
+In this proposal it is claimed that the context object,
+which is now function scoped, should be goroutine scoped.
+
+This conception change prevents the need
+to pass the context object explicitly through the call stack,
+it eliminate the motivation to store the context anywhere but local variable,
+and obviate the existence of `context.TODO`.
+
 On the other hand, it maintains the essential code explicitness,
 reduces code verbosity, reduces API exposure,
 makes easier context adapting for existing code,
 and not less important, maintains backward compatibility.
-
-The current context system causes the context object to live in function scopes.
-It is created in a function, and passed through function calls.
-This proposal makes it live in goroutine scope.
-It is created when a goroutine starts and it is loaded from and
-saved to the goroutine storage.
-
-The ability to pass a context with different deadline, or cancel function
-through a function call in the same goroutine makes no sense.
-For example, if a function is called with the same goroutine,
-it should have the same context as it's parent function in the stack.
-**The context belongs to the goroutine.**
 
 The proposed change makes the context object a first class citizen of Go.
 It should be integrated into the goroutine struct and into the `go` keyword syntax.
 The reason is that the context object provides go with missing capabilities
 of controlling goroutine lifecycle, and storing scoped metadata information.
 
-### Against
+### Arguments Against this Proposal
 
 I understand that this proposal might be seen as controversial for many Go developers.
 Here are some opinions that might relate against the proposed change.
@@ -696,4 +678,61 @@ go func() {
   // New goroutine invoked with patent context: context.Get() == ctx
 }()
 f() // Inside f: context.Get() == ctx
+```
+
+## Appendices
+
+### Appendix I - Syntax Change Alternative
+
+An alternative for the `go ctx f()` syntax.
+
+Another option is to add another function to the `context` package:
+
+```go
+func Go(ctx Context, f func()) {
+  go func() {
+    Set(ctx)
+    f()
+  }()
+}
+```
+
+This function will run `f` in a new goroutine with the given `ctx`.
+This solution is less preferred than changing the `go` keyword:
+**(1)** Two not important function calls are added to the stack,
+and **(2)** it limits the function signature to be `func()`,
+so more complicated functions should be wrapped with a `func() {}`.
+
+### Appendix II - Adopting New Conventions
+
+First, new functions should not have the context as their first argument.
+It is no longer needed.
+
+```diff
+-func f(ctx context.Context) {
++func f() {
++  ctx := context.Get()
+}
+```
+
+Old functions that accept the context object should be deprecated:
+
+```diff
++// Deprecated, use g instead.
+func f(ctx context.Context) {
+  // Use ctx...
+}
+
++func g() {
++  ctx := context.Get()
++  f(ctx)
++}
+```
+
+New code that use old style, context accepting functions can simply
+pass `context.Get()`:
+
+```diff
+-f(context.TODO())
++f(context.Get())
 ```
