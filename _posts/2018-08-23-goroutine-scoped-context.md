@@ -4,16 +4,16 @@ title: Goroutine Scoped Context Proposal
 ---
 
 The Context design in Go is beautiful and powerful.
-As all things, it can also be improved.
-In this post I will present the main problems I currently see in the context system,
+But like all things, it also can be improved.
+In this post I will present the major problems I currently see in the context system,
 a backward compatible solution to those problems,
 and a proof of concept library that implements a demo of the solution.
-Hopefully, I could convince that this change is necessary and can
+Hopefully, you'll be convinced that this change is necessary and can
 improve the user experience in the Go language.
 
-I think that the problems I raise in this post are painful to a lot of Go programmers,
+I think that the problems I raise here are painful to a lot of Go programmers,
 and I could only hope that this post will result in an effort
-towards a solution, or an inspiration for a better solution.
+towards a solution, or be an inspiration for a better solution.
 
 ## Problem Statement
 
@@ -37,8 +37,7 @@ passed to the 1st function.
 There are two ways to deal with this issue.
 
 The **right** way is to update 98 functions.
-Update each function to accept the context as it's first argument and
-to call the next function in the stack with that context object:
+Each function needs to be updated to accept the context as it's first argument and to call the next function in the stack with that context object:
 
 ```diff
  func f1(ctx context.Context) {
@@ -68,15 +67,14 @@ to call the next function in the stack with that context object:
 The **wrong** way is to store the context in a place which is globally available.
 We'll elaborate on it later.
 
-The proposed **right** solution works, but it has some drawbacks:
+The proposed **right** solution works, but it has drawbacks:
 
-1. There is a high burden in updating all function calls to accept the context
-   and to pass it following calls.
-   All along the call stack.
-2. Functions that have nothing to do with context, become aware for the context.
-   It is messy, distracting and increase the risk to introduce new bugs.
-3. Could lead to code duplication or increase in API surface.
-   For example, the case of public API that should maintain backward compatibility.
+1. There is a high overhead in updating all function calls to accept the context
+   and to pass it following calls, all along the call stack.
+2. Functions that have nothing to do with context, become aware of the context.
+   It is messy, distracting and increases the risk of introducing new bugs.
+3. It could lead to code duplication or an increase in API surface.
+   For example, in the case of public API that should maintain backward compatibility.
    Let's suppose that the private `f22` was a public `F22`.
    The new code that is context aware will be:
 
@@ -100,29 +98,28 @@ The proposed **right** solution works, but it has some drawbacks:
    Was it more correct to use `context.TODO()`?
    Should we deprecate `F22`?
 
-   This pattern exists in the standard library where public functions
-   had to adjust themselves to the context when it was introduced.
+   This pattern can be found in the standard library where public functions
+   had to be adjusted for context when it was introduced.
    For example: `net.Dial`/`net.DialContext` and `sql.Exec`/`sql.ExecContext`.
 
-4. We can get stuck if somewhere in the middle of the call stack we don't have
-   control on the code.
-   In this situation, we can't use the context at all.
+4. If somewhere in the middle of the call stack we don't have
+   control on the code, we can't use the context at all.
 
    For example,
    the very popular ORM library [GORM](https://github.com/jinzhu/gorm)
    still [does not support context](https://github.com/jinzhu/gorm/issues/1231).
    Since the context must be passed explicitly through the entire call stack,
    GORM users can't enjoy the benefits of using the context in SQL queries,
-   even though that the `sql` package do support it.
+   even though the `sql` package does support it.
 
-The explicitness of the context is it's strength.
+The explicitness of context is it's strength.
 But, it does come with a price.
-The current context system might cause high burden, distracting code,
+The current context system might cause high overhead, distracting code,
 high API exposure, backward compatibility issues and impossible implementations.
 
 ### 2. The Context Should not be Stored
 
-The proposed "wrong" solution to the problem discussed in the previous chapter
+The proposed "wrong" solution to the problem mentioned in the previous chapter
 was to store the context in a global place.
 
 Let's discuss two wrong solutions:
@@ -150,8 +147,8 @@ Let's discuss two wrong solutions:
 
 This solution is very wrong.
 For instance, it will fail for concurrency reasons.
-We can't call `f1` from two different goroutines concurrently.
-Concurrent calls to `f1` will override `gCtx`,
+If we call `f1` from two different goroutines concurrently,
+concurrent calls to `f1` will override `gCtx`,
 which will allow `f100` of the first call to read the context of the second call.
 
 - Create a struct that will hold the context.
@@ -177,20 +174,19 @@ which will allow `f100` of the first call to read the context of the second call
  }
 ```
 
-This is quite a big change, and most of the times it won't be as easy as
+This requires quite a big change, and most of the times it won't be as easy as
 in the example above.
 Gladly, this code is safe for concurrent usage.
-On the other hand, this is also not a good solution,
-let's understand why.
+However, this is also not a good solution.
+Let's understand why.
 
-The `context` package documentation contains the following paragraph.
-Please follow the paragraph citation and my wanderings about them.
+The `context` package documentation contains the following paragraph, to which I added my thoughts.
 
 > Programs that use Contexts should follow these rules to keep interfaces
 > consistent across packages and enable static analysis tools to check
 > context propagation:
 
-We need to follow rules when using context.
+Here we are told that We need to follow rules when using context.
 We need to use linters to check our context propagation.
 Are we using such tools?
 [Apparently](https://github.com/golang/go/issues/16742), there is no such tool.
@@ -198,8 +194,8 @@ Are we using such tools?
 > Do not store Contexts inside a struct type; instead, pass a Context explicitly
 > to each function that needs it.
 
-This line instruct us to choose the first solution over the second solution.
-It made me wander, why should there be rules about how to use the context object?
+In this line we are instructed to choose the first solution over the second solution.
+It made me wonder, why should there be rules about how to use the context object?
 
 > The Context should be the first parameter, typically named ctx:
 >
@@ -208,8 +204,8 @@ It made me wander, why should there be rules about how to use the context object
 >     }
 
 This is a convention. Which is OK.
-But still, it is up to the programmer to be aware of it and to follow it.
-This is very not Go-ish, very not similar to `go fmt` for example.
+But it is left to the programmer to be aware of it and to follow it.
+This is very uncharacteristic for Go, very different than `go fmt` for example.
 
 > Do not pass a nil Context, even if a function permits it.
 
@@ -219,12 +215,11 @@ Again, the programmer needs to be aware of it.
 > Pass `context.TODO` if you are unsure about which Context to use.
 
 What does it mean?
-How can I not be sure which context to use?
-Specially with the current design where creating, modifying and passing the
+How can I be unsure which context to use?
+Especially with the current design where creating, modifying and passing the
 context is so explicit?
 
-Let's go back to the first part of the citation.
-The simple rules that we must obey are:
+Let's review the simple rules that we must obey:
 
 1. Always pass the context by function calls (preferably always as first argument).
 2. Store the context only in a function local variable.
@@ -233,8 +228,8 @@ The simple rules that we must obey are:
 And maybe a fourth rule, if the second one was not clear enough:
 **never** store the context in any struct or global variable.
 
-Those are strict rules.
-Even the standard library itself find it hard to follow them.
+These are strict rules.
+Even the standard library itself finds it hard to follow them.
 The common [`http.Request`](https://golang.org/pkg/net/http/?#Request)
 struct violates the second rule and contains a `ctx` field, with a remarkable comment:
 
@@ -262,7 +257,7 @@ func (handle)ServeHTTP(r *http.Request, w http.ResponseWriter) {
 }
 ```
 
-This is technically violates the first rule of the context -
+This technically violates the first rule of the context -
 the context is not passed as the first argument.
 I am guessing that when the context was introduced to the standard library,
 adding context to the http stack could be implemented in two ways:
@@ -279,11 +274,11 @@ adding context to the http stack could be implemented in two ways:
 2. Inject the context into the `http.Request` object. And keep the interface as is.
 
 The solution of attaching the context to the request object was more backward compatible
-and included less API additions. Keeping the http package API clean as it used to be.
-It only had to forego in violating the context rules and shallow copy
+and called for less API additions. Keeping the http package API clean as it used to be.
+It only demands the violation of the context rules and a shallow copy
 (with the `WithContext` method) of the request object whenever the context should be updated.
 
-The current implementation of the context system encourages such foregoes.
+The current implementation of the context system encourages such infractions.
 The rules are strict and it is easy to disregard them when too many changes are committed.
 
 We might also be thankful that this was the implementation chosen for the `http` package.
@@ -293,7 +288,7 @@ Why is it so important to follow the context rules?
 Let's examine the case of `http.Request`:
 
 1. The request object becomes our context manager.
-   Instead of using the context object, we usually find ourselves pass
+   Instead of using the context object, we usually find ourselves passing
    the request object.
    For example, consider a function `f` that needs both the context and the request.
    Usually, `f` will be implemented as follows:
@@ -317,7 +312,7 @@ Let's examine the case of `http.Request`:
    look funny and wrong: `f(req.Context(), req)`.
    This is the point where `req` of type `*http.Request` becomes the context manager.
 
-2. If `http.Request` becomes the context, manager, updating the context becomes
+2. If `http.Request` becomes the context manager, updating the context becomes
    tedious and ugly:
 
    ```go
@@ -341,11 +336,9 @@ Let's examine the case of `http.Request`:
    }
    ```
 
-In order to achieve the context powers, we must obey the rules.
-The rules are strict so it is sometimes easy to workaround them.
+In order to utilize the powers of the context, we must obey the rules but the rules are strict so it is sometimes tempting to workaround them.
 This is usually done by storing the context, which may have bad implications.
-The current design of the context system encourages such workarounds - and this is why
-the rules were made up in the first place.
+In essence, the current design of the context system encourages workarounds - and that is why its rules were made up in the first place.
 
 ### 3. The Existence of `context.TODO`
 
@@ -360,18 +353,17 @@ This is the documentation:
 > TODO is recognized by static analysis tools that determine whether
 > Contexts are propagated correctly in a program.
 
-This comment actually states that the
-existence of `context.TODO` ("should use `context.TODO` when")
-is a proof for problems #2 ("sometimes unclear") and #1 ("not yet available").
-If those problems did not exist, so `context.TODO` did not exist.
+According to this paragraph, the
+existence of `context.TODO` is basically proof of that there are problems. We "should use `context.TODO` when" something is "unclear" (problem #2) or "not yet available" (problem #1).
+If those problems did not exist, so `context.TODO` would not exist.
 
-The parody in the `TODO` existence is that with all the explicitness that the context
+The irony with the `TODO` implementation is that with all the explicitness that the context
 package provides, it is still "unclear which Context to use or it is not yet available".
 
 ## Proposal
 
-The proposal discusses the approach of storing the context in the goroutine struct,
-referred as "**goroutine scoped context**".
+This proposal discusses an approach of storing the context in the goroutine struct,
+referred to as "**goroutine scoped context**".
 We will see how it can solve all the enumerated problems, without any compromises.
 
 Storing a context object in a "goroutine local storage"
@@ -380,10 +372,9 @@ was already discussed in Github issue
 [#21355](https://github.com/golang/go/issues/21355).
 The issue discussion had diverged from the original purpose,
 and the proposal did not cover the essence of the given problem.
-Eventually the issue was closed.
-The reasons of which it was closed are not related to this proposed solution.
+Eventually the issue was closed for reasons that are not related to this proposed solution.
 
-The proposal is composed of several required changes, which will define
+The proposal is comprised of several required changes, which will define
 the language API for goroutine scoped context.
 After which, we will discuss the correctness of this new definitions.
 
@@ -410,7 +401,7 @@ func Set(ctx Context)
 ### 3. Update `go` to Propagate the Context
 
 The context should propagate through goroutines.
-The default behavior is that an invoked goroutine gets it's parent context.
+The default behavior is that an invoked goroutine gets its parent context.
 When goroutine **A** is invoking a new goroutine **B**, **B** should get **A**'s context.
 
 ### 4. Enable `go` with Context
@@ -437,16 +428,14 @@ If language syntax modification is a limitation here, see
 
 ### Philosophy
 
-Now that we have defined the goroutine scoped context API,
-we have the tools to wander about the essence of goroutine
-scoped context:
+Now that we have defined the goroutine scoped context API, we have the tools to wonder about its essence:
 
 #### "Should Goroutines Have a Context?"
 
-Dave Chaney wrote a post about "Context isn't for cancellation"
+Dave Chaney wrote a post called "Context isn't for cancellation"
 [blog post](https://dave.cheney.net/2017/08/20/context-isnt-for-cancellation).
 Even though I disagree with the main issue raised in this post,
-Dave raises a good and valid point, the context object has two independent roles.
+Dave raises a good and valid point: the context object has two independent roles.
 Two roles packed into one object.
 
 It will be easier to address the need for goroutine scoped context
@@ -486,9 +475,9 @@ if we inspect those two independent roles independently:
    ```
 
    It is no longer needed to explicitly pass a context.
-   This could replace the classic cancellation signalling by an empty-struct "done" channel,
+   This could replace the classic cancellation signaling by an empty-struct "done" channel,
    which is no longer needed.
-   There is new, one, standard way to indicate if a a running code should be done.
+   There is a new, one, standard way to indicate if a a running code should be done.
 
 2. **Values**: Custom key-value pairs that can be retrieved from the context.
    Inspected by the `Value` method and controlled by the `context.WithValue` modifier.
@@ -496,16 +485,16 @@ if we inspect those two independent roles independently:
    Goroutine scoped context introduces a way to ask from any piece of code:
    "What is the value of 'X'?"
 
-   This is delicate question, and has no unclear to me.
-   Adding values to the goroutine context should be done
+   This is a complex question, and I don't have a clear answer.
+   Adding a value to the goroutine context should be done
    only if all following code should know the value of "X".
-   This is not always the case -
-   For example, an HTTP middleware that extracts user credentials from the request
+   But this is not always the case -
+   For example, consider an HTTP middleware that extracts user credentials from the request
    and adds it to the goroutine context.
-   Not necessarily all handler code should know about those credentials.
+   Not all handler code should necessarily know about those credentials.
 
    But this applies to the current context design as well -
-   Imagine the given example, just think of request context instead of goroutine context.
+   Consider the given example, just think of request context instead of goroutine context.
 
    Context values should not be abused and programmers should take good care
    when considering storing values in the context object.
@@ -514,24 +503,24 @@ if we inspect those two independent roles independently:
    a way to obtain those values without explicitly passing the context object through
    a the call stack.
 
-Adding the context accessor functions maintain the
+Adding the context accessor functions maintains the
 explicitness of the previous context system.
 One could follow exactly where the context has been set and has been used.
 Additionally, since it does not need to be passed through function calls,
 it prevents breaking APIs.
-Finally, it depresses the need to store the context anywhere but a local variable,
+Finally, it eliminates the need to store the context anywhere but a local variable,
 and make the decision of choosing the context clear.
 
-We've made arguments why the context should be goroutine scoped.
+We've made arguments as to why the context should be goroutine scoped.
 But let's examine why it should not be functioned scoped.
 
-#### "Should Function Get a Context?"
+#### "Should Functions Get a Context?"
 
 We've enumerated several points for and against function scoped context.
-But we haven't actually discussed the meaning.
+But we haven't actually discussed its meaning.
 Functions group lines of code that are invoked sequentially.
-Having a unique context specific for those set of lines, have no additional
-value, in any other case but for testing purposes.
+Having a unique context specific for those set of lines, adds no additional
+value, in any other case except for testing purposes.
 
 Consider the following code.
 
@@ -552,23 +541,23 @@ As long as `main` and `f` share the same goroutine,
 `main` should not pass to `f` any other context but the one it is using.
 
 Goroutine scoped context does not eliminate the option to write the above code,
-but it discourage it.
+but it discourages it.
 A function should not get the context by argument, but by `context.Get()`.
 
 ### Conclusions
 
-In this proposal it is claimed that the context object,
+This proposal claims that the context object,
 which is now function scoped, should be goroutine scoped.
 
 This conception change prevents the need
 to pass the context object explicitly through the call stack,
-it eliminate the motivation to store the context anywhere but local variable,
-and obviate the existence of `context.TODO`.
+it eliminates the motivation to store the context anywhere but local variable,
+and obviates the existence of `context.TODO`.
 
 On the other hand, it maintains the essential code explicitness,
 reduces code verbosity, reduces API exposure,
 makes easier context adapting for existing code,
-and not less important, maintains backward compatibility.
+and just as important, maintains backward compatibility.
 
 The proposed change makes the context object a first class citizen of Go.
 It should be integrated into the goroutine struct and into the `go` keyword syntax.
@@ -578,7 +567,7 @@ of controlling goroutine lifecycle, and storing scoped metadata information.
 ### Arguments Against this Proposal
 
 I understand that this proposal might be seen as controversial for many Go developers.
-Here are some opinions that might relate against the proposed change.
+Here are my answers to few opinions I expect against the proposal:
 
 #### This Change Result in Mix of High Level and Low level Objects
 
@@ -597,16 +586,16 @@ Every function should explicitly accept it as it should explicitly return an err
 And every function call should explicitly pass it, as it explicitly checks the error
 return value.
 
-**Answer**: But actually, it is not the same.
+**Answer**: Actually, they are not the same.
 In Go's error handling, a function returns an error only if it doesn't handle it.
-But when dealing with context, a function should receive it in arguments and pass it through function calls, even if it is has no concern about the context.
+But when dealing with context, a function should receive it in arguments and pass it through function calls, even if it has no concern about the context.
 Currently you are gratuitously forced to handle context.
 
 Additionally, the Go team has understood that error handling is sometimes a burden,
 and makes Go code clumsy.
 One of Go 2 proposals deals exactly with this issue, with the name:
 [error handling](https://go.googlesource.com/proposal/+/master/design/go2draft-error-handling-overview.md).
-It is a time to understand that also context handling is sometimes a burden,
+It is time to understand that context handling is also sometimes a burden,
 and makes Go code more clumsy.
 
 #### Context is for Network Code
@@ -616,7 +605,7 @@ not penetrate the other parts of the language.
 
 **Answer**: Even though `context` used to be `x/net/context`,
 it is not anymore part of the `net` package.
-Despite the fact that the `net` package is the main consumer,
+Despite the fact that the `net` package is its main consumer,
 it is also being used by packages like
 `database/sql`, `os/exec`, `runtime/trace`, `runtime/pprof`, `cmd/vet` and more.
 
@@ -626,12 +615,12 @@ in the general form, and not only in network context.
 
 ## Proof of Concept
 
-Inspired by [a8m](https://github.com/a8m) idea,
+Inspired by [a8m](https://github.com/a8m)'s idea,
 I've implemented a simplified version of the proposed solution
 without any changes to the standard library.
 It is available on [github.com/posener/context](https://github.com/posener/context).
 
-The purpose of this library is only to give a feeling how context in goroutines will be like,
+The purpose of this library is only to give a sense of how context in goroutines will be like,
 if it would was appropriately implemented.
 
 Instead of modifying the goroutine struct to contain the context,
@@ -700,8 +689,8 @@ func Go(ctx Context, f func()) {
 ```
 
 This function will run `f` in a new goroutine with the given `ctx`.
-This solution is less preferred than changing the `go` keyword:
-**(1)** Two not important function calls are added to the stack,
+This solution is less preferable than changing the `go` keyword:
+**(1)** Two unimportant function calls are added to the stack,
 and **(2)** it limits the function signature to be `func()`,
 so more complicated functions should be wrapped with a `func() {}`.
 
@@ -731,7 +720,7 @@ func f(ctx context.Context) {
 +}
 ```
 
-New code that use old style, context accepting functions can simply
+New code that uses old-style context accepting functions can simply
 pass `context.Get()`:
 
 ```diff
