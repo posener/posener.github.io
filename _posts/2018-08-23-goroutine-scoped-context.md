@@ -186,7 +186,7 @@ The `context` package documentation contains the following paragraph, to which I
 > consistent across packages and enable static analysis tools to check
 > context propagation:
 
-Here we are told that We need to follow rules when using context.
+Here we are told that we need to follow rules when using context.
 We need to use linters to check our context propagation.
 Are we using such tools?
 [Apparently](https://github.com/golang/go/issues/16742), there is no such tool.
@@ -347,7 +347,7 @@ The `TODO` is actually a "workaround", for the design of the current context sys
 This is the documentation:
 
 > TODO returns a non-nil, empty Context.
-> Code should use `context.TODO` when it's unclear which Context to use or it is not yet
+> Code should use `context.TODO` when it's unclear which context to use or it is not yet
 > available (because the surrounding function has not yet been extended to accept a
 > Context parameter).
 > TODO is recognized by static analysis tools that determine whether
