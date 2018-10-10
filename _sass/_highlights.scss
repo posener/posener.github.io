@@ -2,11 +2,15 @@
 
 code {
     radius: 5px;
-    padding: 0px 5px 0px 5px;
+    padding: 2px 4px;
     background-color: $codeBackground;
-    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace ;
+    font-family: 'Source Code Pro',monospace ;
     font-size: 90%;
     display:inline-block;
+    border: transparent;
+    border-radius: 4px;
+    box-sizing: border-box;
+    margin: 0;
 }
 
 .highlight  {
