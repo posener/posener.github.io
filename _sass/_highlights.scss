@@ -1,41 +1,42 @@
 /* from https://help.farbox.com/pygments.html */
 
+/* inline code */
 code {
     radius: 5px;
     padding: 2px 4px;
     background-color: $codeBackground;
     font-family: 'Source Code Pro',monospace ;
-    font-size: 90%;
+    font-size: 80%;
     display:inline-block;
     border: transparent;
     border-radius: 4px;
     box-sizing: border-box;
     margin: 0;
+    @include mobile {
+        font-size: 70%;
+    }
 }
 
+/* a block of code */
 .highlight  {
-    font-size: 95%;
     background-color: $codeBackground;
-    border-bottom-left-radius: 3px ;
-    border-bottom-right-radius: 3px ;
-    border-top-left-radius: 3px ;
-    border-top-right-radius: 3px ;
+    border-radius: 5px ;
     box-sizing: border-box ;
     color: #24292e ;
     display: block ;
-    margin-bottom: 0px ;
-    margin-left: 0px ;
-    margin-right: 0px ;
-    margin-top: 0px ;
+    margin: 0px ;
     overflow-x: auto ;
     overflow-y: auto ;
-    padding-bottom: 10px ;
-    padding-left: 10px ;
-    padding-right: 10px ;
-    padding-top: 10px ;
+    padding: 10px ;
     white-space: pre ;
     word-break: normal ;
     word-wrap: normal ;
+
+    @include mobile {
+        font-size: 95%; // from code size
+        padding: 2px;
+        border-radius: 2px ;
+    }
 }
 
 .highlight .c { color: #408080 } /* Comment */
