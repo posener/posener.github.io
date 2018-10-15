@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Go Context Scoping
+title: Go Context Scoping Part 2
 ---
 
 Thanks for the feedback on the [previous blog post](/goroutine-scoped-context) by
@@ -61,9 +61,10 @@ But let's not give up. Let's try to fix it.
 
 ## Solution
 
-The solution to the described problem is to stack the context in the goroutine instead of setting them.
-When we enter a context scope we should pop a context object to the stack
-and when we exit the context scope we should pop it from the stack.
+The solution to the described problem is to stack the context in the
+goroutine instead of setting them.
+When we enter a context scope we will push a context object to the stack
+and we will pop it on context exit.
 The stack itself still needs to be goroutine scoped,
 so we won't mix contexts from different goroutines.
 In the enumerated options below we can examine different approaches
