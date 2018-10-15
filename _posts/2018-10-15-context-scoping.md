@@ -46,25 +46,27 @@ of the `foo` function matches the second context scope.
 Since the proposed design treats both of those scopes as one,
 it fails the program's logic.
 
-The `main` function sets a cancellable context and defer the cancellation.
-It then calls `foo`, and expects that after `foo` the context will have no error -
-since the cancel haven't been called yet.
-The `foo` function also sets a cancellable context and defers the cancellation.
-When `foo` exits, `cancel` is called and the goroutine scoped context is now cancelled.
-This context is applied outside `foo` since it is goroutine scoped.
-The result is that `main`'s expectations will fail.
+> In more detailed,
+> the `main` function sets a cancellable context and defer the cancellation.
+> It then calls `foo`, and expects that `foo` will have no effect on the context.
+> So after the call to `foo` the context will have no error -
+> since the cancel haven't been called yet.
+> The `foo` function also sets a cancellable context and defers the cancellation.
+> When `foo` exits, `cancel` is called and the goroutine scoped context is now cancelled.
+> This context is applied outside `foo` since it is goroutine scoped.
+> The result is that `main`'s expectations will fail.
 
 The example contradicts the claim in the previous post that the context is goroutine scoped,
 and shows that the proposed solution is wrong.
 
-But let's not give up. Let's try to fix it.
+Next, we will see the fix to the solution from the previous post.
 
 ## Solution
 
 The solution to the described problem is to stack the context in the
 goroutine instead of setting them.
 When we enter a context scope we will push a context object to the stack
-and we will pop it on context exit.
+and we will pop it when we exit the context scope.
 The stack itself still needs to be goroutine scoped,
 so we won't mix contexts from different goroutines.
 In the enumerated options below we can examine different approaches
@@ -73,20 +75,21 @@ for managing the context stack.
 ### Option 1: Scoped `Set` Function
 
 Consider the [original proposal](/goroutine-scoped-context/#proposal) with a slight change.
-A call to `context.Set` will push the new context to the stack,
-and will return an `unset` function that should be used to pop the pushed context.
-The result is that the context is scoped between the call to `context.Set`
-and the call to the returned `unset` function.
 
-Using `context.Get` will just return the context in the top of the stack.
+1. A call to `context.Set` will push the new context to the stack,
+   and will return an `unset` function that should be used to pop the pushed context.
+   The result is that the context scope starts on call to `context.Set`,
+   and ends on call to the returned `unset` function.
 
-Invoking a goroutine will create a new stack containing the context from the top
-of the parent goroutine stack.
+2. Using `context.Get` will just return the context in the top of the stack.
+
+3. Invoking a goroutine will create a new stack containing the context from the top
+   of the parent goroutine stack.
 
 > The names `Set` and `unset` where chosen because of similarity to the previous
 > solution. This should be discussed.
 
-Usage example:
+#### Usage Example
 
 ```go
 unset := context.Set(ctx) // ctx scope begins
@@ -121,16 +124,18 @@ func foo() {
 }
 ```
 
-A proof of concept of this implementation of this solution can be found in the
-[scoped-set](https://github.com/posener/context/tree/scoped-set) branch of the
-[posener/context](https://github.com/posener/context) package.
+#### Implementation
+
+A proof of concept implementation of this solution was pushed to the
+[github.com/posener/context](https://github.com/posener/context) package.
 
 Let's discuss this solution.
 
 #### Advantages
 
 1. **Explicit** context scope: The scope is between two function calls.
-2. **Flexible** context scope: we can place the function calls wherever we want.
+   It is very clear when the scope starts and ends.
+2. **Flexible** context scope: We can place the function calls wherever we want.
 3. There is no longer the need for the `go ctx foo()` syntax.
    As said, new invoked goroutines will contain a new context stack containing
    the top context of the parent goroutine.
@@ -143,22 +148,30 @@ Let's discuss this solution.
    + unset()
    ```
 
+4. **Minimal**: The context is only defined when needed.
+   Code is more concise.
+   Efficiency wise, the context is only copied when it is set
+   (not on every function call in the stack as in the current implementation).
+
 #### Drawbacks
 
 1. Calling the returned `unset` function is crucial.
-   Like other crucial functions (`Close` of an opened file, or HTTP response body)
-   it can forgotten.
-   This problem, however, could be solved with a linter rule.
+   However, this is similar to other basic designs in the Go standard library,
+   such as calling `Close` function of an opened file, or HTTP response body.
+   A linter rule could remind us of forgotten calls to `unset`.
 
 2. It might look ugly.
    The API of retuning a function which should be called or deferred is a bit weird.
    It might be less intuitive and harder for people to learn.
+
    It also makes the code more verbose about the context - a line of code to create
    the context, another line to set it, another one to unset it, these are a lot
    of lines that distract us from the pure business logic of our code.
 
-   A solution to this problem might be creating helper functions that create a new
-   context and set it.
+   On the other hand, this verbose code will only appear in places that we
+   are actually concerned about the context.
+
+   A solution to this problem might be by helper functions.
    For example, in the `context` package:
 
    ```go
@@ -172,6 +185,8 @@ Let's discuss this solution.
 	   return cancel, unset
    }
    ```
+
+   However, I am not sure about the necessity.
 
 ### Option 2: Function Scope
 
@@ -218,6 +233,9 @@ On the other hand, this kind of solution will be weird.
 A go developer might find it confusing when the function call and the
 function signature are mismatched.
 
+Maybe the best way would be to wait for Go2 to come up with a fit
+syntax for handling context scopes.
+
 Your opinion about such a solution is welcomed.
 
 ## Conclusions
@@ -227,5 +245,3 @@ I suggested two possible interesting options for solving the context problems.
 
 These solutions are explicit, more flexible, and more efficient than the current design.
 Additionally they solve the problems that the current design faces.
-
-I am sorry about the misleading in the previous post.
