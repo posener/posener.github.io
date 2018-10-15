@@ -15,7 +15,7 @@ I think that the problems I raise here are painful to a lot of Go programmers,
 and I could only hope that this post will result in an effort
 towards a solution, or be an inspiration for a better solution.
 
-I would love to know what you think, both on the raised problem and on the proposed solution.
+:heart: I would love to know what you think, both on the raised problem and on the proposed solution.
 Please use the comments platform on the bottom of the page for this kind of discussion.
 
 ## Problem Statement
@@ -389,6 +389,9 @@ The irony with the `TODO` implementation is that with all the explicitness that 
 package provides, it is still "unclear which Context to use or it is not yet available".
 
 ## Proposal
+
+> This proposal has a bug. Please refer to the updated
+> [context scoping proposal](/context-scoping).
 
 This proposal discusses an approach of storing the context in the goroutine struct,
 referred to as "**goroutine scoped context**".
