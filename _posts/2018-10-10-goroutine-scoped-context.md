@@ -15,6 +15,9 @@ I think that the problems I raise here are painful to a lot of Go programmers,
 and I could only hope that this post will result in an effort
 towards a solution, or be an inspiration for a better solution.
 
+Please checkout a this [follow up post](/context-scoping), for issues raised
+in this proposal.
+
 :heart: I would love to know what you think, both on the raised problem and on the proposed solution.
 Please use the comments platform on the bottom of the page for this kind of discussion.
 
