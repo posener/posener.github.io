@@ -1,6 +1,8 @@
 ---
 layout: post
 title: Go Context Scoping Part 2
+keywords: go,golang,context,scope
+github: https://github.com/posener/context
 ---
 
 Thanks for the feedback on the [previous blog post](/goroutine-scoped-context) by

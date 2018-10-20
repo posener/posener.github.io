@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Open API with Go Part 1 - Introduction
+keywords: go,golang,rest,swagger,open-api,open,api,http,server,microservice
 ---
 
 In Stratoscale, after the standard transition from a monolith to micro-services, we discovered that an "API first"
@@ -215,7 +216,7 @@ This tool takes advantage of this endpoint and provides a CLI for the server.
 If the server does not expose such endpoint but you have the swagger file locally, this tool can also work with it.
 [Shay](https://github.com/sharbov), the creator of this tool, also works at Stratoscale.
 
-# Stay Tuned
+## Stay Tuned
 
 In the [following post](/go-swagger) I'll talk about [go-swagger](https://github.com/go-swagger/go-swagger) - a Go code generation
 tool from swagger files.

@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Swagger with Go Part 2 - go-swagger
+keywords: go,golang,rest,swagger,open-api,open,api,http,server,microservice
 ---
 
 In the [previous post](/openapi-intro), I gave a short intro to the open API (Swagger) specification, and showed

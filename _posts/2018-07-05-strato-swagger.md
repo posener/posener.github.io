@@ -1,6 +1,8 @@
 ---
 layout: post
 title: Swagger with Go Part 3 - Stratoscale/swagger
+keywords: go,golang,rest,swagger,open-api,open,api,http,server,microservice,stratoscale
+github: https://github.com/Stratoscale/swagger
 ---
 
 In the [previous post](/go-swagger), I gave an intro for [go-swagger](https://github.com/go-swagger/go-swagger), 

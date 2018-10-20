@@ -1,6 +1,8 @@
 ---
 layout: post
 title: Meetup Talk - Experimental Typed ORM Library
+keywords: go,golang,orm,sql,mysql,gorm
+github: https://github.com/posener/orm
 ---
 
 A talk I gave in [Go Israel Meetup](https://www.meetup.com/Go-Israel/events/kjvczlyxcbfb/)

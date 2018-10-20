@@ -1,0 +1,28 @@
+{% if page.reddit or page.nuts or page.github or page.gist %}
+<div class="panel">
+    {% if page.reddit %}
+    <a href="{{ page.reddit }}">
+        <img src="/images/reddit.png" width="40px"
+            title="View discussion on reddit thead.">
+    </a>
+    {% endif %}
+    {% if page.github %}
+    <a href="{{ page.github }}">
+        <img src="/images/github.ico" width="40px"
+            title="Browse source code." >
+    </a>
+    {% endif %}
+    {% if page.gist %}
+    <a href="{{ page.gist }}">
+        <img src="/images/gist.png" width="40px"
+            title="This page was originally a gist.">
+    </a>
+    {% endif %}
+    {% if page.nuts %}
+    <a href="{{ page.nuts }}">
+        <img src="/images/nuts.png" width="40px"
+            title="View discussion on golang nuts." >
+    </a>
+    {% endif %}
+</div>
+{% endif %}
