@@ -1,6 +1,9 @@
 ---
 layout: post
 title: Goroutine Scoped Context Proposal
+keywords: go,golang,context,scope
+reddit: https://www.reddit.com/r/golang/comments/9n25lo/goroutine_scoped_context_proposal/
+github: https://github.com/posener/context
 ---
 
 The context design in Go is beautiful and powerful.
