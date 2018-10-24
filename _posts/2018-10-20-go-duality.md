@@ -69,8 +69,8 @@ func main() {
 
     _, err = io.Copy(dst, src)
     if err != nil {
+        defer os.Remove(dstPath)
         log.Fatalf("Failed copy: %v", err)
-        os.Remove(dstPath)
     }
 }
 ```
@@ -94,7 +94,7 @@ $ # The os.Remove was not called.
 This means that we must [catch the signal](https://godoc.org/os/signal):
 
 ```diff
-+   sig := make(chan os.Signal)
++   sig := make(chan os.Signal, 1)
 +   signal.Notify(sig, os.Interrupt)
 
     _, err = io.Copy(dst, src)
@@ -136,7 +136,14 @@ func chunkedCopy(sig <-chan os.Signal, w io.Writer, r io.Reader) error {
 }
 ```
 
-<!-- Check what is the bug and add output here -->
+Let's try again the program:
+
+```bash
+$ go run main.go src dst
+^CFailed copy: interrupted
+$ ls dst --size --human-readable
+ls: cannot access 'dst': No such file or directory
+```
 
 The solution works, however, it is a workaround,
 as any other possible solutions.
