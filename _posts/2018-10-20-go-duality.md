@@ -11,14 +11,14 @@ As it turns out, the solution is not obvious.
 The reason is that the Go language contains two fundamental language entities
 that can't interact with each other - "The Duality" (A name chosen by the author).
 
-In this post we will present those entities,
+In this post I will present those entities,
 the fundamental difference between them,
 and the problems that it arises.
 
 :heart: I would love to know what you think.
 Please use the comments platform on the bottom of the page.
 
-## The Duality
+## The Duality Entities
 
 Two of the fundamental entities of Go are **channels** and
 the **IO interfaces** (`io.Reader` and `io.Writer`).
@@ -91,8 +91,7 @@ $ # The destination file is still there.
 $ # The os.Remove was not called.
 ```
 
-So we must catch the signal.
-This is how you can [catch a signal](https://godoc.org/os/signal) in Go.
+This means that we must [catch the signal](https://godoc.org/os/signal):
 
 ```diff
 +   sig := make(chan os.Signal)
@@ -104,10 +103,8 @@ This is how you can [catch a signal](https://godoc.org/os/signal) in Go.
 Now we are stuck. We have the `src` which implements `io.Reader`,
 the `dst` which implements `io.Writer` and `sig` which is a channel.
 We want to copy from `src` to `dst` but cancel and delete `dst` if
-a signal is sent in the channel.
+a signal is sent in `sig`.
 `io.Copy` is blocking, so we can't stop it from the same goroutine.
-
-We have several options in front of us.
 
 One of the options to overcome this obstacle is to divide
 the long operation into shorter operations and to check
@@ -141,10 +138,10 @@ func chunkedCopy(sig <-chan os.Signal, w io.Writer, r io.Reader) error {
 
 <!-- Check what is the bug and add output here -->
 
-The solution works, however, it is a workaround.
-Other possible solutions, would also be workarounds.
+The solution works, however, it is a workaround,
+as any other possible solutions.
 The reason is the duality in the Go language:
-the synchronous copy operation can't be stopped,
+The synchronous IO copy operation can't be stopped,
 the asynchronous cancellation can only happen
 **between** synchronous operations.
 
