@@ -6,26 +6,32 @@ keywords: go,golang,duality,channel,io,reader,writer
 
 Suppose that you want to write a simple Go program:
 A program that copies a file and stops and **cleans the copy** when
-receiving an OS signal.
-As it turns out, the solution is not obvious.
+receiving an OS interrupt signal.
+As it turns out, the solution is not obvious, at least the cleaning part of it.
 The reason is that the Go language contains two fundamental language entities
-that can't interact with each other - "The Duality" (A name chosen by the author).
+that can't interact with each other -
+"The Duality" of the Go language (A name chosen by the author).
 
-In this post I will present those entities,
+In this post I will present the duality entities,
 the fundamental difference between them,
 and the problems that it arises.
 
 :heart: I would love to know what you think.
-Please use the comments platform on the bottom of the page.
+Please use the comments on the bottom of this page.
 
 ## The Duality Entities
 
 Two of the fundamental entities of Go are **channels** and
 the **IO interfaces** (`io.Reader` and `io.Writer`).
-Both of those entities provide basic IO operations, but they behave in
-completely different ways.
+Those entities are similar in the sense that they provide
+interaction with goroutine-external-resource, and they might
+be blocking - depending on the implementation.
+On the other hand, they behave in completely different ways.
 Worse, code uses one type of entity can't interact with code that
 uses the other.
+While goroutine code that is blocked by one channel operation can
+be prompt by other channel operation,
+code that is being blocked by an IO operation is stuck.
 
 ### Example
 
@@ -37,7 +43,7 @@ lets consider the example given in the prologue:
 
 How would you implement it?
 
-The following program copies the file and stops when receiving an OS signal.
+The following program copies the file and stops when receiving an interrupt signal.
 However, it does not clean the copy, since it does not catch the signal.
 
 ```go
@@ -50,7 +56,7 @@ import (
 )
 
 func main() {
-    if len(os.Args) < 2 {
+    if len(os.Args) < 3 {
         log.Fatal("Usage: must specify source and destination")
     }
     srcPath, dstPath := os.Args[1], os.Args[2]
@@ -69,7 +75,7 @@ func main() {
 
     _, err = io.Copy(dst, src)
     if err != nil {
-        defer os.Remove(dstPath)
+        defer os.Remove(dstPath) // Clean the copy
         log.Fatalf("Failed copy: %v", err)
     }
 }
@@ -91,7 +97,7 @@ $ # The destination file is still there.
 $ # The os.Remove was not called.
 ```
 
-This means that we must [catch the signal](https://godoc.org/os/signal):
+This means that we must [register on the signal](https://godoc.org/os/signal):
 
 ```diff
 +   sig := make(chan os.Signal, 1)
@@ -99,6 +105,11 @@ This means that we must [catch the signal](https://godoc.org/os/signal):
 
     _, err = io.Copy(dst, src)
 ```
+
+After registering our channel with `signal.Notify`
+(Notice that the channel is of size 1, think why).
+Whenever a user will interrupt the program, an interrupt `os.Signal`
+will be send over the channel instead of killing our program.
 
 Now we are stuck. We have the `src` which implements `io.Reader`,
 the `dst` which implements `io.Writer` and `sig` which is a channel.
