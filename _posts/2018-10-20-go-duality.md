@@ -31,7 +31,8 @@ Worse, code uses one type of entity can't interact with code that
 uses the other.
 While goroutine code that is blocked by one channel operation can
 be prompt by other channel operation,
-code that is being blocked by an IO operation is stuck.
+code that is being blocked by an IO function call is stuck,
+since the interface lacks cancellation options.
 
 ### Example
 
@@ -85,19 +86,21 @@ We can test this program:
 
 ```bash
 $ # Create a large source file
-$ # (will give us some time to interrupt the copy).
+$ # (will give us some time to interrupt the program).
 $ fallocate -l 10G src
-$ # Invoke the program and interrupt (by pressing ctrl-C).
+$ # Invoke the program and interrupt it (by pressing ctrl-C).
 $ go run main.go src dst
 ^C
-$ # The program exited on signal. Was the dst cleaned up?
+$ # The program exited by the interrupt signal.
+$ # Did the dst file cleaned up?
 $ ls dst --size --human-readable
 572M dst
-$ # The destination file is still there.
+$ # The dst file is still there.
 $ # The os.Remove was not called.
 ```
 
-This means that we must [register on the signal](https://godoc.org/os/signal):
+In order to handle signals,
+we must [register a channel on the signal](https://godoc.org/os/signal).
 
 ```diff
 +   sig := make(chan os.Signal, 1)
@@ -106,16 +109,74 @@ This means that we must [register on the signal](https://godoc.org/os/signal):
     _, err = io.Copy(dst, src)
 ```
 
-After registering our channel with `signal.Notify`
-(Notice that the channel is of size 1, think why).
-Whenever a user will interrupt the program, an interrupt `os.Signal`
-will be send over the channel instead of killing our program.
+After registering our channel with the `signal.Notify` function
+(Notice that the channel is of size 1, think why),
+whenever a user will interrupt the program, an `os.Interrupt` object
+of type `os.Signal` will be send over the channel instead of killing
+our program.
 
-Now we are stuck. We have the `src` which implements `io.Reader`,
+Our current state is that we have the `src` which implements `io.Reader`,
 the `dst` which implements `io.Writer` and `sig` which is a channel.
 We want to copy from `src` to `dst` but cancel and delete `dst` if
 a signal is sent in `sig`.
-`io.Copy` is blocking, so we can't stop it from the same goroutine.
+Since `io.Copy` is blocking, and has no means of cancellation,
+we can't stop the copy operation from the same goroutine.
+We have no out-of-the-box solution for interrupting a copy
+operation in the standard library.
+
+Let's leave the example for now, and get back to the underlying problem.
+
+## The Problem
+
+The `io.Copy` is just and example.
+A lot of the IO interface implementations in the standard library
+are synchronous blocking operations that can't be interrpted.
+For example:
+
+* [`os.File`](https://godoc.org/os#File)-
+  Implements all IO methods.
+* [`bytes.Buffer`](https://golang.org/pkg/bytes/#Buffer)-
+  Implements all IO methods.
+* [`exec.Cmd`](https://godoc.org/os/exec#Cmd)- Has an `Stdin`
+  field that is a `Reader`, and `Stdout` and `Stderr` which
+  are `Writer`s.
+
+A careful reader will find some network APIs missing in the list above.
+These APIs were not forgotten, but are intentionally absent,
+since these APIs were chosen to live on the boarder of the
+duality of the Go language.
+
+### The Standard Library Exceptions
+
+Some components in the `net` package live on the
+thin line of the duality.
+They don't actually contain IO interfaces and channels,
+since it is impossible.
+But they do mix synchronous and asynchronous APIs.
+
+On of them is the [`net.Conn`](https://golang.org/pkg/net/#Conn) interface.
+On one hand, this interface has read and write methods.
+And on the other hand it has `Set(Read|Write)?Deadline` methods.
+
+A synchronous IO (read or write) operation from the connection can be interrupted
+by asynchronous deadline which was set.
+
+Another example is the
+[`http.Request`](https://golang.org/pkg/net/http/#Request).
+It has `Body` field which implements the read IO interface
+(the synchronous part).
+But also has `Context()` which returns the request's context
+(which contains a channel, the asynchronous part).
+
+A synchronous IO (read or write) of the request body,
+can be asynchronously interrupted by the context which was set.
+
+In those examples the calling any of the synchronous IO APIs,
+might result in a (valid) error that is caused by the asynchronous
+part of the same entity.
+
+
+## Back to the Example
 
 One of the options to overcome this obstacle is to divide
 the long operation into shorter operations and to check
@@ -191,48 +252,6 @@ For example, in the standard library, channels are use in the following APIs:
 They are mostly used for IOs with external resources, such as files,
 network and OS processes, and in-program buffers manipulation.
 Some examples from the standard library:
-
-* [`os.File`](https://godoc.org/os#File)-
-  Implements all IO methods.
-* [`bytes.Buffer`](https://golang.org/pkg/bytes/#Buffer)-
-  Implements all IO methods.
-* [`exec.Cmd`](https://godoc.org/os/exec#Cmd)- Has an `Stdin`
-  field that is a `Reader`, and `Stdout` and `Stderr` which
-  are `Writer`s.
-
-A careful reader will find some network APIs missing in the list above.
-These APIs were not forgotten, but are intentionally absent,
-since these APIs were chosen to live on the boarder of the
-duality of the Go language.
-
-### The Standard Library Exceptions
-
-Some components in the `net` package live on the
-thin line of the duality.
-They don't actually contain IO interfaces and channels,
-since it is impossible.
-But they do mix synchronous and asynchronous APIs.
-
-On of them is the [`net.Conn`](https://golang.org/pkg/net/#Conn) interface.
-On one hand, this interface has read and write methods.
-And on the other hand it has `Set(Read|Write)?Deadline` methods.
-
-A synchronous IO (read or write) operation from the connection can be interrupted
-by asynchronous deadline which was set.
-
-Another example is the
-[`http.Request`](https://golang.org/pkg/net/http/#Request).
-It has `Body` field which implements the read IO interface
-(the synchronous part).
-But also has `Context()` which returns the request's context
-(which contains a channel, the asynchronous part).
-
-A synchronous IO (read or write) of the request body,
-can be asynchronously interrupted by the context which was set.
-
-In those examples the calling any of the synchronous IO APIs,
-might result in a (valid) error that is caused by the asynchronous
-part of the same entity.
 
 ## Conclusions
 
