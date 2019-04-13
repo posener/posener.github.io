@@ -2,7 +2,6 @@
 layout: post
 title: Goroutine Scoped Context Proposal
 keywords: go,golang,context,scope
-reddit: https://www.reddit.com/r/golang/comments/9n25lo/goroutine_scoped_context_proposal/
 github: https://github.com/posener/context
 ---
 
@@ -17,9 +16,6 @@ improve the user experience in the Go language.
 I think that the problems I raise here are painful to a lot of Go programmers,
 and I could only hope that this post will result in an effort
 towards a solution, or be an inspiration for a better solution.
-
-Please checkout a this [follow up post](/context-scoping), for issues raised
-in this proposal.
 
 :heart: I would love to know what you think, both on the raised problem and on the proposed solution.
 Please use the comments platform on the bottom of the page for this kind of discussion.
@@ -396,9 +392,6 @@ package provides, it is still "unclear which Context to use or it is not yet ava
 
 ## Proposal
 
-> This proposal has a bug. Please refer to the updated
-> [context scoping proposal](/context-scoping).
-
 This proposal discusses an approach of storing the context in the goroutine struct,
 referred to as "**goroutine scoped context**".
 We will see how it can solve all the enumerated problems, without any compromises.
@@ -418,8 +411,9 @@ After which, we will discuss the correctness of this new definitions.
 ### 1. Store a Context object in the Goroutine Struct
 
 First we need to enable the storage of a context object in the goroutine struct.
-We will assume it is possible and dismiss threats of cyclic dependencies
-as "implementation details".
+The storage of the context object will be a stack, as we will see in advanced stages of this proposal.
+We will assume it is possible and dismiss threats of cyclic dependencies between
+the packages as "implementation details".
 
 This stage goes hand in hand with a second stage:
 
@@ -428,18 +422,35 @@ This stage goes hand in hand with a second stage:
 The following goroutine context accessor functions should be added
 to the `context` package:
 
+1. A call to `context.Set` will push the new context to the stack,
+   and will return an `unset` function that should be used to pop the pushed context.
+   The result is that the context scope starts on call to `context.Set`,
+   and ends on call to the returned `unset` function.
+
+2. A call to `context.Get` will return the context in the top of the stack.
+
+Usage Example:
+
 ```go
-// Get gets the context of the current goroutine.
-func Get() Context
-// Set updates the context of the current goroutine.
-func Set(ctx Context)
+defer context.Set(ctx)()
+// Context scope is from here to the end of the function.
+```
+
+The unset function can be called explicitly:
+
+```go
+unset := context.Set(ctx) // ctx scope begins
+// The scope
+[ ... ]
+unset() // ctx scope ends
 ```
 
 ### 3. Update `go` to Propagate the Context
 
-The context should propagate through goroutines.
-The default behavior is that an invoked goroutine gets its parent context.
-When goroutine **A** is invoking a new goroutine **B**, **B** should get **A**'s context.
+A new goroutine will have a new stack initiated with one element containing the context
+from the top of the parent goroutine stack.
+When goroutine **A** is invoking a new goroutine **B**, **B** should have a stack
+containing **A**'s top context.
 
 ### 4. Enable `go` with Context
 
@@ -455,10 +466,6 @@ specific context to the new goroutine.
 
 This change is backward compatible, since calling `go` with two argument in not allowed.
 Additionally, checking that `ctx` is of type `context.Context` can be done in compile time.
-
-<!-- Furthermore, it goes hand by hand with the first change, in the direction of making
-the context a first class citizen of the Go language, and not just another package
-in the standard library. -->
 
 If language syntax modification is a limitation here, see
 [appendix I](#appendix-i---syntax-change-alternative).
@@ -702,12 +709,14 @@ ctx := context.Get()
 ctx, cancel := context.WithTimeout(ctx, duration)
 defer cancel()
 // ctx was changed so: context.Get() != ctx
-context.Set(ctx)
+unset = context.Set(ctx)
 // Goroutine context was updated, so: context.Get() == ctx
 go func() {
-  // New goroutine invoked with patent context: context.Get() == ctx
+	// New goroutine invoked with patent context: context.Get() == ctx
 }()
 f() // Inside f: context.Get() == ctx
+unset()
+// after unsetting the context context.Get() != ctx
 ```
 
 ## Appendices
@@ -766,3 +775,10 @@ pass `context.Get()`:
 -f(context.TODO())
 +f(context.Get())
 ```
+
+## Thanks
+
+Thanks for the feedback by [Philip Pearl](http://disq.us/p/1wh0mba)
+and [yimmy149](http://disq.us/p/1wh8r8j) on a previous version of this post.
+They enlightened me with a fundamental mistake in one of the assumptions I made.
+This mistake is now fixed in this proposal.
