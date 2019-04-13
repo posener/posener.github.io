@@ -43,21 +43,21 @@ There are two ways to deal with this issue.
 
 ```go
 func f1(ctx context.Context) {
-  f2()
+	f2()
 }
 
 func f2() {
-  f3()
+	f3()
 }
 
 [ ... f3 through f98 ... ]
 
 func f99() {
-  f100(context.TODO()) // TODO: Use the right context
+	f100(context.TODO()) // TODO: Use the right context
 }
 
 func f100(ctx context.Context) {
-  <-ctx.Done()
+	<-ctx.Done()
 }
 ```
 
@@ -71,26 +71,26 @@ and to call the next function in the stack with that context object:
 
 ```diff
  func f1(ctx context.Context) {
--  f2()
-+  f2(ctx)
+-	f2()
++	f2(ctx)
  }
 
 -func f2() {
 +func f2(ctx context.Context) {
--  f3()
-+  f3(ctx)
+-	f3()
++	f3(ctx)
  }
 
  [ ... f3 through f98 ... ]
 
 -func f99() {
 +func f99(ctx context.Context) {
--  f100(context.TODO())
-+  f100(ctx)
+-	f100(context.TODO())
++	f100(ctx)
  }
 
  func f100(ctx context.Context) {
-   <-ctx.Done()
+ 	<-ctx.Done()
  }
 ```
 
@@ -109,13 +109,13 @@ This solution works, but it has drawbacks:
    // F22 remains with the same signature to preserve backward
    // compatibility.
    func F22() {
-     F22Context(context.Background())
+   	F22Context(context.Background())
    }
 
    // F22Context has the new needed functionality of accepting and
    // passing the context.
    func F22Context(ctx context.Context) {
-     f23(ctx)
+   	f23(ctx)
    }
    ```
 
@@ -157,8 +157,8 @@ Let's discuss two wrong solutions:
   +var gCtx context.Context
 
    func f1(ctx context.Context) {
-  +  gCtx = ctx
-     f2()
+  +	gCtx = ctx
+   	f2()
    }
 
    func f2() { f3() }
@@ -167,8 +167,8 @@ Let's discuss two wrong solutions:
 
   -func f100(ctx context.Context) {
   +func f100() {
-  -  <-ctx.Done()
-  +  <-gCtx.Done()
+  -	<-ctx.Done()
+  +	<-gCtx.Done()
    }
   ```
 
@@ -184,9 +184,9 @@ Let's discuss two wrong solutions:
   +type fs struct {ctx context.Context}
 
    func f1(ctx context.Context) {
-  -  f2()
-  +  f := fs{ctx: ctx}
-  +  f.f2()
+  -	f2()
+  +	f := fs{ctx: ctx}
+  +	f.f2()
    }
 
   -func f2() { f3() }
@@ -196,8 +196,8 @@ Let's discuss two wrong solutions:
 
   -func f100(ctx context.Context) {
   +func (f *fs)f100() {
-  -  <-ctx.Done()
-  +  <-f.ctx.Done()
+  -	<-ctx.Done()
+  +	<-f.ctx.Done()
    }
   ```
 
@@ -226,7 +226,7 @@ It made me wonder, why should there be rules about how to use the context object
 > The Context should be the first parameter, typically named ctx:
 >
 >     func DoSomething(ctx context.Context, arg Arg) error {
->       // ... use ctx ...
+>     	// ... use ctx ...
 >     }
 
 This is a convention. Which is OK.
@@ -261,12 +261,12 @@ struct violates the second rule and contains a `ctx` field, with a remarkable co
 
 ```go
 type Request struct {
-  ...
-  // ctx is either the client or server context. It should only
-  // be modified via copying the whole Request using WithContext.
-  // It is unexported to prevent people from using Context wrong
-  // and mutating the contexts held by callers of the same request.
-  ctx context.Context
+	...
+	// ctx is either the client or server context. It should only
+	// be modified via copying the whole Request using WithContext.
+	// It is unexported to prevent people from using Context wrong
+	// and mutating the contexts held by callers of the same request.
+	ctx context.Context
 }
 ```
 
@@ -278,8 +278,8 @@ is using the request object `Context` function:
 
 ```go
 func (handle)ServeHTTP(r *http.Request, w http.ResponseWriter) {
-  ctx := r.Context()
-  // use ctx...
+	ctx := r.Context()
+	// use ctx...
 }
 ```
 
@@ -293,7 +293,7 @@ adding context to the http stack could be implemented in two ways:
 
    ```go
    type HandlerContext interface {
-     ServeHTTP(context.Context, *http.Request, http.ResponseWriter)
+   	ServeHTTP(context.Context, *http.Request, http.ResponseWriter)
    }
    ```
 
@@ -321,8 +321,8 @@ Let's examine the case of `http.Request`:
 
    ```go
    func f(req *http.Request) {
-     ctx := req.Context()
-     // Use req and ctx...
+   	ctx := req.Context()
+   	// Use req and ctx...
    }
    ```
 
@@ -330,7 +330,7 @@ Let's examine the case of `http.Request`:
 
    ```go
    func f(ctx context.Context, req *http.Request) {
-     // Use req and ctx...
+   	// Use req and ctx...
    }
    ```
 
@@ -357,8 +357,8 @@ Let's examine the case of `http.Request`:
 
    ```go
    func f(ctx context.Context, req *http.Request) {
-     // Use req and ctx...
-     // But wait! should we use ctx or req.Context()?
+   	// Use req and ctx...
+   	// But wait! should we use ctx or req.Context()?
    }
    ```
 
@@ -500,9 +500,9 @@ if we inspect those two independent roles independently:
    ```go
    select {
    case <-context.Get().Done(): // WOW!
-     return // I should not be running...
+   	return // I should not be running...
    case task <-tasks:
-     // I should run a task!
+   	// I should run a task!
    }
    ```
 
@@ -571,9 +571,9 @@ Consider the following code.
 
 ```go
 func main() {
-  ctx, cancel := context.WithCancel(context.Background())
-  defer cancel()
-  f(ctx)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	f(ctx)
 }
 ```
 
@@ -683,7 +683,7 @@ The default behavior of new goroutines is to get the parent goroutine context:
 ```go
 // If here: context.Get() == ctx1
 go func() {
-   // Then also here: context.Get() == ctx1
+	// Then also here: context.Get() == ctx1
 }()
 ```
 
@@ -696,7 +696,7 @@ ctx, cancel := context.WithTimeout(ctx, duration)
 defer cancel()
 // ctx was changed so: context.Get() != ctx
 go ctx func() {
-  // New goroutine invoked with new context: context.Get() == ctx
+	// New goroutine invoked with new context: context.Get() == ctx
 }()
 ```
 
@@ -729,10 +729,10 @@ Another option is to add another function to the `context` package:
 
 ```go
 func Go(ctx Context, f func()) {
-  go func() {
-    Set(ctx)
-    f()
-  }()
+	go func() {
+		defer Set(ctx)
+		f()
+	}()
 }
 ```
 
@@ -750,21 +750,21 @@ It is no longer needed.
 ```diff
 -func f(ctx context.Context) {
 +func f() {
-+  ctx := context.Get()
-}
++	ctx := context.Get()
+ }
 ```
 
 Old functions that accept the context object should be deprecated:
 
 ```diff
 +// Deprecated, use g instead.
-func f(ctx context.Context) {
-  // Use ctx...
-}
+ func f(ctx context.Context) {
+ 	// Use ctx...
+ }
 
 +func g() {
-+  ctx := context.Get()
-+  f(ctx)
++	ctx := context.Get()
++	f(ctx)
 +}
 ```
 
