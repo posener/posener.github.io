@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Goroutine Scoped Context Proposal
-keywords: go,golang,context,scope
+keywords: go,golang,context,scope,proposal,go2,
 github: https://github.com/posener/context
 ---
 
