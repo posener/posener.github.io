@@ -10,6 +10,7 @@ In this story, I’ll discuss the need for a Go script, how we would expect it t
 During the discussion I’ll deep dive to scripts, shells, and shebangs.
 Finally, we’ll discuss solutions that will make Go scripts work.
 
+This post was [translated to Mandarin](https://www.infoq.cn/article/Mbzyz8sEDtbz5*4mhIZo) by 金灵杰 (Lingjie).
 
 ## Why Go is good for scripting?
 
