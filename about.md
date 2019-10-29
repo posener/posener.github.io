@@ -120,6 +120,70 @@ This small addition that I provide enables automatic timing propagation through 
 when service A calls service B which calls service C, The headers will be joined such that whoever called A will
 get the full details of the whole stack.
 
+### [subcmd](https://github.com/posener/subcmd)
+
+> A minimalistic library that enables easy sub commands with the standard `flag` library.
+
+The standard flag library is a great library for adding support for flag parsing for binaries.
+It has clean API and easy to use. However, when using it, it is not trivial to add a sub commands
+for the main command. Most programs have sub commands, for example, the `go` command have sub
+commands such as `go run`, `go build` or `go test`.
+
+The `subcmd` library adds support for sub commands in a way that retains the look and feel of the
+standard `flag` library.
+
+Check out the [example](https://github.com/posener/subcmd/blob/master/example/main.go).
+
+### [script](https://github.com/posener/script)
+
+> Easily write scripts with Go. Improvements for https://github.com/bitfield/script.
+
+I went across the really cool library https://github.com/bitfield/script which helps writing scripts
+in Go. Writing scripts in Go may result in quite verbose code, and the standard library does not
+provide all the required tooling around it (mainly because it is not intended to). This tool enables
+running short and clear scripts in Go, imitating the piping features of shell commands.
+
+For example: `numErrors, err := script.File("test.txt").Match("Error").CountLines()` reads a file,
+filters only for lines with the word "Error" and return the number of lines.
+
+I really liked the library and took a deeper look into the implementation. One thing that I poped
+out was that the piping is done by reading all the data from a previous command into the memory and
+manipulating it there, not as shell pipes work, or as piping should be handled. For example, in the
+above example, we can read each line from the file. Then, in the match function, process each line
+and pass on only matching lines. Then, in the count lines we can just store a counter and not even
+store the line data. To perform the above pipe, we only need memory that the largest line can fit
+into (actually not even that). We certainly not need memory that is large enough to fit the
+"test.txt" file.
+
+I came up with an improvement that takes advantage of Go's `io.Reader` interface. There are two
+building blocks:
+
+The [`Command`](https://github.com/posener/script/blob/master/command.go) struct, which represent a
+single command in the stream. It can be read by the exposed `io.Reader`, and can be optionally
+closed with `io.Closer`. Opposed to shell commands, the `Command` do not have an `stderr` output,
+but uses Go errors to report when an error occurs. As in shell commands, having error does not
+necessarily result in no output from the command - a command can have output and an error.
+
+The [`Stream`](https://github.com/posener/script/blob/master/stream.go) struct enables chaining
+commands one to another. There are some factory methods that create streams from different inputs
+such as `Stdin`, `Cat` that streams file content, `Ls` that lists files, or so forth. The stream can
+be chain using different commands, such as `Grep` to filter for a regexp, `Head` to get the
+beginning or the ending of the stream, `Cut` to take certain fields of each line, `Sort`, `Uniq` or
+so forth. Then, the stream can be dumped to different writers, such as `ToStdout`, `ToFile`,
+`ToString` or so forth. These methods also return to the users all the errors that occured in all
+the commands in the stream.
+
+Another way to process the stream is the the
+[`Exec`](https://github.com/posener/script/blob/master/exec.go) command which got special attention.
+It enables running a shell command, which can take the stream as its `stdin`, and continue the
+stream with the program `stdout`. If the program fails, its stdout still continue to the stream, but
+an error will be added (just as shell commands do). If the user is interested in the program's
+`stderr`, it can provide an extra writer.
+
+A custom command can be used using the `Stream`'s `PipeTo` method. This method gets a function that
+given a `io.Reader`, representing the stdin for the command, returns a `Command`. This way a user
+can define a custom command to interact with the stream.
+
 ### [chrome-github-godoc](https://github.com/posener/chrome-github-godoc)
 
 > Chrome extension that replaces Github view of git commit messages with useful godoc.org synopsis.
