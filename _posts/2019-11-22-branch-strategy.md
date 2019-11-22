@@ -95,10 +95,6 @@ In this blog post, I proposed to use the branch strategy to handle Go versioning
 
 When it comes to scaling software, one of Go's purposes, choosing the branch strategy over the copy strategy is the right decision. In this strategy you can enjoy all git tools for version management, the good familiar developer workflows, a clean project directory and backward compatible library. Additionally, in time, when more and more libraries will convert to Go modules, we could change back the default branch to point on the master branch, and enjoy a duplication-free codebase.
 
-## References
-
-[1]: https://blog.golang.org/v2-go-modules "Go Modules: v2 and Beyond"
-
 ## Appendix
 
 ### Tip: using Github pre-release
@@ -107,4 +103,7 @@ When creating a new release, use the pre-release Github check-box. Set the relea
 
 ![Readme](/images/branch-strategy/pre-release.png)
 
+
 By using the pre-release checkbox, the release is editable: you can update the release by increment the alpha number and tag a new commit: Click "Edit", create a new tag `v2.0.0-alpha.1`, choose the `master` branch and click `Update release` button.
+
+[1]: https://blog.golang.org/v2-go-modules "Go Modules: v2 and Beyond"
