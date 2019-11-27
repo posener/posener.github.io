@@ -14,7 +14,7 @@ keywords: posener,about
 I love building things on my free time.
 Here are a few open source projects I've been working on.
 
-### [complete](https://github.com/posener/complete)
+### [complete](https://github.com/posener/complete/tree/master)
 
 > Bash completion written in go + bash completion for go command.
 
@@ -120,19 +120,20 @@ This small addition that I provide enables automatic timing propagation through 
 when service A calls service B which calls service C, The headers will be joined such that whoever called A will
 get the full details of the whole stack.
 
-### [subcmd](https://github.com/posener/subcmd)
+### [cmd](https://github.com/posener/cmd)
 
-> A minimalistic library that enables easy sub commands with the standard `flag` library.
+> A minimalistic library that enables sub commands with the standard `flag` library.
 
 The standard flag library is a great library for adding support for flag parsing for binaries.
 It has clean API and easy to use. However, when using it, it is not trivial to add a sub commands
 for the main command. Most programs have sub commands, for example, the `go` command have sub
 commands such as `go run`, `go build` or `go test`.
 
-The `subcmd` library adds support for sub commands in a way that retains the look and feel of the
-standard `flag` library.
+The `cmd` library adds support for sub commands in a way that retains the look and feel of the
+standard `flag` library. It also enables automatic bash completion, flag value enforcement,
+positional argument definition and enforcement and automatic usage.
 
-Check out the [example](https://github.com/posener/subcmd/blob/master/example/main.go).
+Check out the [example](https://github.com/posener/cmd/blob/master/example/main.go).
 
 ### [script](https://github.com/posener/script)
 
