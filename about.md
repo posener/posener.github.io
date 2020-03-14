@@ -138,6 +138,13 @@ positional argument definition and enforcement and automatic usage.
 
 Check out the [example](https://github.com/posener/cmd/blob/master/example/main.go).
 
+### [compare](https://github.com/posener/compare)
+
+> More readable and easier comparison tasks in Go.
+
+A library that uses reflections in order to enables some functionalities around functions of the
+form `func(T, T) int`.
+
 ### [script](https://github.com/posener/script)
 
 > Easily write scripts with Go. Improvements for https://github.com/bitfield/script.
