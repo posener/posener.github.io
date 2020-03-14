@@ -195,6 +195,12 @@ A custom command can be used using the `Stream`'s `PipeTo` method. This method g
 given a `io.Reader`, representing the stdin for the command, returns a `Command`. This way a user
 can define a custom command to interact with the stream.
 
+### [tiler](https://github.com/posener/tiler)
+
+> A Go port of https://github.com/nuno-faria/tiler.
+
+Tiles an image from a set of given small images.
+
 ### [chrome-github-godoc](https://github.com/posener/chrome-github-godoc)
 
 > Chrome extension that replaces Github view of git commit messages with useful godoc.org synopsis.
