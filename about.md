@@ -138,12 +138,16 @@ positional argument definition and enforcement and automatic usage.
 
 Check out the [example](https://github.com/posener/cmd/blob/master/example/main.go).
 
-### [compare](https://github.com/posener/compare)
+### [order](https://github.com/posener/order)
 
-> More readable and easier comparison tasks in Go.
+> Enables easier ordering and comparison tasks
 
-A library that uses reflections in order to enables some functionalities around functions of the
-form `func(T, T) int`.
+This package provides functionality to easily define and apply order on values. It works out of the
+box for most primitive types and their pointer versions, and enable order of any object using
+three-way comparison with a given `func(T, T) int` function, or by implementing the generic
+interface: `func (T) Compare(T)` int.
+
+Read more about it in the [blog post](/order).
 
 ### [script](https://github.com/posener/script)
 
