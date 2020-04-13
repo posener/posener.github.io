@@ -71,7 +71,7 @@ Putting the cards on the table, the branching strategy is the de-facto accepted 
 
 *Development workflows*: In the copy strategy, if a commit is merged into the master branch, it is not known which of the versions were affected, or if both of them were affected. Marking new releases can actually be done on commits that did not affect the release at all. I also believe that the copy strategy also introduces difficulties in other aspects such as testing, integration with automated tools and understanding the health of the code.
 
-# Backward Compatibility Solution
+## Backward Compatibility Solution
 
 Once convinced to use the branching strategy, let's discuss how can it work with Go programs and libraries that do not support Go versioning.
 
@@ -89,7 +89,7 @@ Changing the default branch comes with a minor price of a few esthetic flaws. Th
 
 In my opinion it is a small price to pay, and worth all the benefits of using branches for versioning. If anyone has a better solution, I will be happy to hear about it - please comment below.
 
-# Conclusions
+## Conclusions
 
 In this blog post, I proposed to use the branch strategy to handle Go versioning and explain why it should be the recommended approach. In addition, I also showed how it can work with Go libraries that do not support Go versioning.
 

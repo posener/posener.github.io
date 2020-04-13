@@ -292,7 +292,7 @@ After all, we wanted to use the shebang mechanism - Why? Because it's simple, st
 - That’s more or less the point where I stop using bash, and start using more comfortable
 languages as my scripting languages (such as Go :-) ).
 
-# Lucky Us, We Have [`gorun`](https://github.com/erning/gorun)
+## Lucky Us, We Have [`gorun`](https://github.com/erning/gorun)
 
 
 `gorun` does exactly what we wanted. You put it in the shebang line as `#! /usr/bin/env gorun`, and make the script
@@ -331,7 +331,7 @@ Another issue, is that when the script lies in a go package that you compile. Th
 even though it is not part of the files that are needed to be loaded by the program, and will fail the compilation.
 A workaround for that problem is to remove the `.go` suffix, but then you can’t enjoy tools such as `go fmt`.
 
-# Final Thoughts
+## Final Thoughts
 
 We’ve seen the importance of enabling writing scripts in Go, and we’ve found different ways to run them. 
 Here is a summary of the findings:

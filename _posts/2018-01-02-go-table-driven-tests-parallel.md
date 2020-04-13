@@ -109,7 +109,7 @@ As it can be seen from the test output: in all the cases, our test function `t.L
  all our test cases were checked and that our function is great. This is very dangerous and could lead to bugs in our
   code!*
 
-# What Happened?
+## What Happened?
 
 An experience Gopher will immediately sense the source for the problem. A less experience one might fight this issue
  for hours, or, in case that he was lucky and saw the bug when adding the `t.Parallel`, will just give up and remove
@@ -125,7 +125,7 @@ In our case, we have the `func(t *testing.T) {...}` closure, that is ran in a go
 
 This causing the `tc` variable to advance to the next `tests` value, which causes the "Go common mistake" to happen.
 
-# How to Solve This?
+## How to Solve This?
 
 There are some solutions to this problem. None of them is too elegant. The easiest, maybe not nicest, is to define a new
  local variable inside the loop that will hide the loop variable.
@@ -167,7 +167,7 @@ PASS
 ok  	github.com/posener/testparallel	0.002s
 ```
 
-# Final Thoughts
+## Final Thoughts
 
 I think that this issue can be very dangerous - the coverage of a function can change from full cover to only one test
  case without even noticing it.
