@@ -37,7 +37,7 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: bold;
 
   line-height: 2;
-  margin: 1em 0 15px;
+  margin: 1em 0;
   padding: 0;
 
   @include mobile {
@@ -113,10 +113,7 @@ ul, ol {
 
 li {
   margin: 5px 0;
-  line-height: 1.8;
-  @include mobile {
-    line-height: 1.5;
-  }
+  line-height: 1.2;
 }
 
 ol {
@@ -147,7 +144,7 @@ img {
   width: 18px;
   position: relative;
   left: -10px;
-  bottom: -20px;
+  bottom: -15px;
   float: left;
 }
 
@@ -305,6 +302,13 @@ nav {
 // .main
 //
 
+blockquote {
+  margin-left: 10px;
+  padding-left: 10px;
+  border-left: 1px solid $lightGray;
+  color: $gray;
+}
+
 .posts > .post {
   // padding-bottom: 2em;
   border-bottom: 1px solid $lightGray;
@@ -316,13 +320,6 @@ nav {
 }
 
 .post {
-  blockquote {
-    margin-left: 10px;
-    padding-left: 10px;
-    border-left: 1px solid $lightGray;
-    color: $gray;
-  }
-
   .comments {
     margin-top: 10px;
   }
