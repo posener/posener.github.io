@@ -15,10 +15,10 @@ $gray: #666;
 $lightGray: #eee;
 $white: #fff;
 
-// Font stacks
-$helvetica: Helvetica, Arial, sans-serif;
-$helveticaNeue: "Helvetica Neue", Helvetica, Arial, sans-serif;
-$georgia: Georgia, serif;
+// Font stacks https://google-webfonts-helper.herokuapp.com/fonts
+$fontText: 'Source Sans Pro', sans-serif;
+$fontTitle: 'Source Sans Pro', sans-serif;
+$fontCode: 'Source Code Pro', monospace;
 
 // Mobile breakpoints
 @mixin mobile {

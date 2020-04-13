@@ -20,14 +20,14 @@
 
         headingNodes.forEach(function(node){
 
-            let img = document.createElement('img');
-            img.src = '/images/pin.png';
-            img.width = 15;
+            let bookmark = document.createElement('img');
+            bookmark.src = '/images/bookmark.svg';
+            bookmark.classList.add('bookmark')
 
             let link = document.createElement('a');
             link.className = 'pageLink';
             link.href = '#' + node.getAttribute('id');
-            link.appendChild(img);
+            link.appendChild(bookmark);
             node.appendChild(link);
         });
 

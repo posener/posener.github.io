@@ -5,21 +5,24 @@ code {
     radius: 5px;
     padding: 2px 4px;
     background-color: $codeBackground;
-    font-family: 'Source Code Pro',monospace ;
+    font-family: $fontCode ;
     font-size: 80%;
     display:inline-block;
     border: transparent;
     border-radius: 4px;
     box-sizing: border-box;
     margin: 0;
+
     @include mobile {
-        font-size: 70%;
+        font-size: 85%;
     }
 }
 
 /* a block of code */
 .highlight  {
     background-color: $codeBackground;
+    font-size: 95%;
+    line-height: 140%;
     border-radius: 5px ;
     box-sizing: border-box ;
     color: #24292e ;
@@ -33,7 +36,6 @@ code {
     word-wrap: normal ;
 
     @include mobile {
-        font-size: 95%; // from code size
         padding: 2px;
         border-radius: 2px ;
     }
