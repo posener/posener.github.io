@@ -27,6 +27,31 @@ the shell.
 A bonus package in this project is [`gocomplete`](https://github.com/posener/complete/tree/master/gocomplete)
 which is bash completion for the Go command line, written in Go.
 
+### [goaction](https://github.com/posener/goaction)
+
+> Write Github Actions in Go.
+
+A library that helps writing Github Actions using the Go programming language. It enables writing a
+standard Go script that can be run locally as well as a Github Action.
+
+Additionally, the library provides
+[statically typed Github Actions API](https://pkg.go.dev/github.com/posener/goaction#pkg-variables),
+and a [Github API client for the repository](https://pkg.go.dev/github.com/posener/goaction@v0.1.4/actionutil#Client).
+The mind-blowing (inceptional) part is that this repository is also a Go Github Action. It
+automatically creates and updates all the boilerplate required for converting a Go repository to a
+Github Action.
+
+Back in the days, I've created the [goreadme project](#goreadme). It was originally developed as a
+[Github App](https://github.com/posener/goreadme-server) that used to be hosted on Heroku. Besides
+the complex structure, an additional issue was that users were afraid to give the App credentials to
+their repository. Once the Github Actions was introduced, I simplified the project significantly by
+converting it from a Github App to a Github Action. Since it was written in Go, I thought that it
+would be cool to take the opportunity and create a general infrastructure for creating Github
+Actions in Go, and this is where the goaction came from.
+
+Github [wrote a blog post](https://github.blog/2020-10-29-github-action-hero-eyal-posener-and-go-action)
+and [twitted](https://twitter.com/github/status/1322297320290066432) about it.
+
 ### [gitfs](https://github.com/posener/gitfs)
 
 > A complete solution for static files in Go code.
