@@ -52,33 +52,6 @@ Actions in Go, and this is where the goaction came from.
 Github [wrote a blog post](https://github.blog/2020-10-29-github-action-hero-eyal-posener-and-go-action)
 and [twitted](https://twitter.com/github/status/1322297320290066432) about it.
 
-### [gitfs](https://github.com/posener/gitfs)
-
-> A complete solution for static files in Go code.
-
-I thought it would be nice to be able to import static file without the burden of `go generate`
-command any time they are changed. In this project I'm using mostly Github APIs to get static files
-the program wants to open. The usage is as simple as:
-
-```go
-fs, err := gitfs.New("github.com/user/repo/path@version")
-// Handle err…
-f, err := fs.Open("file.txt")
-// Handle err and use f.
-```
-
-One of the nice things here is that the `fs` object is an implementation of the standard
-`http.FileSystem` interface.
-
-I then extended the library to be able to load the files from local directory for development
-purposes. And then extended it to convert the filesystem to be contained in a Go file that enables
-binary packing of the filesystem. Transiting from either of these modes is automatic.
-
-This library also contains some `http.FileSystem` goodies in the
-[fsutil](https://github.com/posener/gitfs/tree/master/fsutil) package, which enable walking over the
-files in the filesystem and loading Go templates from them - they can be used with any
-implementation of `http.FileSystem`.
-
 ### [h2conn](https://github.com/posener/h2conn)
 
 > HTTP2 client-server full-duplex connection.
@@ -223,6 +196,33 @@ an error will be added (just as shell commands do). If the user is interested in
 A custom command can be used using the `Stream`'s `PipeTo` method. This method gets a function that
 given a `io.Reader`, representing the stdin for the command, returns a `Command`. This way a user
 can define a custom command to interact with the stream.
+
+### [gitfs](https://github.com/posener/gitfs)
+
+> A complete solution for static files in Go code.
+
+I thought it would be nice to be able to import static file without the burden of `go generate`
+command any time they are changed. In this project I'm using mostly Github APIs to get static files
+the program wants to open. The usage is as simple as:
+
+```go
+fs, err := gitfs.New("github.com/user/repo/path@version")
+// Handle err…
+f, err := fs.Open("file.txt")
+// Handle err and use f.
+```
+
+One of the nice things here is that the `fs` object is an implementation of the standard
+`http.FileSystem` interface.
+
+I then extended the library to be able to load the files from local directory for development
+purposes. And then extended it to convert the filesystem to be contained in a Go file that enables
+binary packing of the filesystem. Transiting from either of these modes is automatic.
+
+This library also contains some `http.FileSystem` goodies in the
+[fsutil](https://github.com/posener/gitfs/tree/master/fsutil) package, which enable walking over the
+files in the filesystem and loading Go templates from them - they can be used with any
+implementation of `http.FileSystem`.
 
 ### [tiler](https://github.com/posener/tiler)
 
