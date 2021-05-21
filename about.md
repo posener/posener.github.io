@@ -66,6 +66,20 @@ for using both on the server side and the client side.
 If you have a Gorilla websocket handler, and want to test it without starting the server (similar to
 the http testing in Go), this package is for you.
 
+### [auth](https://github.com/posener/auth)
+
+> Painless OAuth authentication middleware.
+
+A very simple middleware that enables authentication for `http.Handler`s, using common OAuth2
+providers.
+With this middleware, you can wrap handlers that must be accessed with authenticated user. Then,
+a user that was not logged in tries to access them, they are automatically redirected to a login
+page. Once log in is completed, they are redirected back to the page they tried to access originally.
+**Authorization** can also be enforced by checking the signed in user from the request context.
+
+All this is done with minimal configuration, of tha OAuth2 provider and client ID and secret. The
+library automatically manages its own cookies.
+
 ### [orm](https://github.com/posener/orm)
 
 > Go Typed ORM.
