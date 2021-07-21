@@ -11,7 +11,7 @@ In this post, I will elaborate on go-swagger, a tool that generates Go code from
 ## go-swagger - Code Generation from Swagger
 
 [go-swagger](https://github.com/go-swagger/go-swagger) is a tool for go developers to generate go code from
-swagger files. It uses various libraries from thr [go-openapi github organization](https://github.com/go-openapi)
+swagger files. It uses various libraries from the [go-openapi github organization](https://github.com/go-openapi)
 to handle the swagger specification and swagger files.
 
 I've been following the project for a while now. It has a very high pulse, with commits being merged to master
